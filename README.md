@@ -66,6 +66,27 @@ Or register it as an MCP server, e.g. in Claude Code:
 claude mcp add --scope user gh-projects -- node /path/to/gh-projects-mcp/server.mjs
 ```
 
+## Bundled Skill + subagent
+
+This repo also ships the judgment layer that sits on top of the MCP tools:
+
+- `.claude/skills/gh-project-manage/SKILL.md` — front-door skill; routes simple asks to a single
+  tool call, delegates multi-step work to the subagent below.
+- `.claude/agents/gh-project-manager.md` — execution subagent for delegated work (health audits,
+  bulk triage, sub-issue restructuring), with a generic 7-point health-audit template and citation
+  contract.
+
+**As a Claude Code plugin** (`.claude-plugin/plugin.json`): install this repo as a plugin and you
+get the MCP server + skill wired up together automatically.
+
+**Manually, for global availability across all your projects**: copy the skill/agent files into
+your user-scope Claude Code config so they apply everywhere, not just when working inside this repo:
+
+```bash
+cp -r .claude/skills/gh-project-manage ~/.claude/skills/
+cp .claude/agents/gh-project-manager.md ~/.claude/agents/
+```
+
 ## Not yet covered
 
 Some more exotic, UI-only GitHub Projects features aren't ported here yet: Insights chart
