@@ -1,0 +1,4 @@
+node_modules/
+.gh-views-debug/
+*.log
+.env

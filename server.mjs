@@ -1,0 +1,333 @@
+#!/usr/bin/env node
+/**
+ * gh-projects-mcp — MCP server for managing GitHub Projects v2.
+ *
+ * Thin wrappers over `gh project` / `gh issue` / `gh label` and the GraphQL
+ * API, plus Playwright/CDP-driven view management (GitHub's API has no
+ * createProjectV2View mutation — view creation is web-UI only).
+ *
+ * Every tool takes owner/repo/project-number as explicit parameters —
+ * nothing is hardcoded to one project, so this works the same from any
+ * repo or chat.
+ */
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { z } from 'zod';
+import { writeFileSync, unlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { gh, gql } from './lib/gql.mjs';
+import { registerViewTools } from './lib/tools-views.mjs';
+
+const server = new McpServer({ name: 'gh-projects-mcp', version: '1.0.0' });
+
+function text(t) {
+  return { content: [{ type: 'text', text: typeof t === 'string' ? t : JSON.stringify(t, null, 2) }] };
+}
+
+function errorText(err) {
+  return { isError: true, content: [{ type: 'text', text: err.message ?? String(err) }] };
+}
+
+async function safe(fn) {
+  try { return await fn(); } catch (err) { return errorText(err); }
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
+server.tool(
+  'gh_auth_status',
+  "Check the authenticated gh CLI account and whether it has the 'project' scope required for all other tools in this server.",
+  {},
+  async () => safe(() => {
+    const r = gh('auth', 'status');
+    return text(r.stdout || r.stderr);
+  }),
+);
+
+// ── Projects ─────────────────────────────────────────────────────────────────
+
+server.tool(
+  'gh_project_list',
+  'List GitHub Projects (v2) owned by a user or organization.',
+  { owner: z.string().describe('GitHub username or org login, e.g. "thisis-romar"') },
+  async ({ owner }) => safe(() => {
+    const r = gh('project', 'list', '--owner', owner, '--format', 'json');
+    return text(JSON.parse(r.stdout));
+  }),
+);
+
+server.tool(
+  'gh_project_view',
+  'Get full details of one GitHub Project: title, description, visibility, item count, fields, and views (including view layout/createdAt, which the plain gh CLI does not surface).',
+  {
+    owner: z.string().describe('GitHub username or org login'),
+    number: z.number().describe('Project number, e.g. 5'),
+  },
+  async ({ owner, number }) => safe(() => {
+    const r = gh('project', 'view', String(number), '--owner', owner, '--format', 'json');
+    const project = JSON.parse(r.stdout);
+    let views = [];
+    try {
+      const q = `{ user(login: "${owner}") { projectV2(number: ${number}) { createdAt updatedAt views(first: 20) { nodes { name number createdAt layout } } } } }`;
+      const vr = gql(q);
+      views = vr.data.user?.projectV2?.views?.nodes ?? [];
+    } catch { /* org-owned project or view query unavailable — omit views */ }
+    return text({ ...project, views });
+  }),
+);
+
+server.tool(
+  'gh_project_create',
+  'Create a new GitHub Project (v2) board for a user or org.',
+  {
+    owner: z.string().describe('GitHub username or org login to own the project'),
+    title: z.string().describe('Project title'),
+  },
+  async ({ owner, title }) => safe(() => {
+    const r = gh('project', 'create', '--owner', owner, '--title', title, '--format', 'json');
+    return text(JSON.parse(r.stdout));
+  }),
+);
+
+server.tool(
+  'gh_project_link',
+  'Link a GitHub Project to a repository (or team), so items in that repo can be auto-added and the project shows up on the repo page.',
+  {
+    number: z.number().describe('Project number'),
+    owner: z.string().describe('Project owner login'),
+    repo: z.string().describe('Repository to link, as "owner/repo"'),
+  },
+  async ({ number, owner, repo }) => safe(() => {
+    const r = gh('project', 'link', String(number), '--owner', owner, '--repo', repo);
+    return text(r.stdout || 'Linked.');
+  }),
+);
+
+// ── Fields ───────────────────────────────────────────────────────────────────
+
+server.tool(
+  'gh_project_field_list',
+  'List all fields on a project (built-in like Status/Assignees plus custom fields), with their IDs and option IDs for single-select fields. Always call this before gh_project_field_create or gh_project_item_edit to get current IDs — never hardcode them.',
+  {
+    owner: z.string().describe('Project owner login'),
+    number: z.number().describe('Project number'),
+  },
+  async ({ owner, number }) => safe(() => {
+    const r = gh('project', 'field-list', String(number), '--owner', owner, '--format', 'json');
+    const parsed = JSON.parse(r.stdout);
+    return text(parsed.fields ?? parsed);
+  }),
+);
+
+server.tool(
+  'gh_project_field_create',
+  'Create a custom field on a project. NOTE: Projects v2 ships reserved built-in fields (Status, Title, Assignees, Labels, Milestone, Repository, ...) — creating a field with one of those exact names throws a GraphQL error. Call gh_project_field_list first and reuse the existing field ID instead of creating a duplicate.',
+  {
+    owner: z.string().describe('Project owner login'),
+    number: z.number().describe('Project number'),
+    name: z.string().describe('Field name'),
+    dataType: z.enum(['TEXT', 'NUMBER', 'DATE', 'SINGLE_SELECT', 'ITERATION']).describe('Field data type'),
+    options: z.array(z.string()).optional().describe('Option labels — required when dataType is SINGLE_SELECT'),
+  },
+  async ({ owner, number, name, dataType, options }) => safe(() => {
+    const args = ['project', 'field-create', String(number), '--owner', owner, '--name', name, '--data-type', dataType, '--format', 'json'];
+    if (dataType === 'SINGLE_SELECT') {
+      if (!options?.length) throw new Error('options is required when dataType is SINGLE_SELECT');
+      args.push('--single-select-options', options.join(','));
+    }
+    const r = gh(...args);
+    return text(JSON.parse(r.stdout));
+  }),
+);
+
+// ── Items ────────────────────────────────────────────────────────────────────
+
+server.tool(
+  'gh_project_item_list',
+  'List items (issues, PRs, draft issues) on a project board, with their current field values.',
+  {
+    owner: z.string().describe('Project owner login'),
+    number: z.number().describe('Project number'),
+    limit: z.number().optional().describe('Max items to return (default 200)'),
+  },
+  async ({ owner, number, limit }) => safe(() => {
+    const r = gh('project', 'item-list', String(number), '--owner', owner, '--format', 'json', '--limit', String(limit ?? 200));
+    const parsed = JSON.parse(r.stdout);
+    return text(parsed.items ?? parsed);
+  }),
+);
+
+server.tool(
+  'gh_project_item_add',
+  'Add an existing issue or pull request to a project board by URL.',
+  {
+    owner: z.string().describe('Project owner login'),
+    number: z.number().describe('Project number'),
+    url: z.string().describe('Full URL of the issue or PR to add'),
+  },
+  async ({ owner, number, url }) => safe(() => {
+    const r = gh('project', 'item-add', String(number), '--owner', owner, '--url', url, '--format', 'json');
+    return text(JSON.parse(r.stdout));
+  }),
+);
+
+server.tool(
+  'gh_project_item_edit',
+  'Set (or clear) one field value on a project item. Get projectId from gh_project_view/gh_project_create, itemId from gh_project_item_list/gh_project_item_add, and fieldId/optionId from gh_project_field_list.',
+  {
+    projectId: z.string().describe('Project node ID (e.g. "PVT_kwHODNwyZM4B...")'),
+    itemId: z.string().describe('Project item node ID'),
+    fieldId: z.string().describe('Field node ID'),
+    valueType: z.enum(['text', 'number', 'date', 'single_select', 'iteration']).describe('Which kind of value this field holds'),
+    value: z.string().optional().describe('The value to set: raw text, a number as string, an ISO date (YYYY-MM-DD), a single-select option ID, or an iteration ID. Omit (with clear=true) to clear the field.'),
+    clear: z.boolean().optional().describe('Clear the field instead of setting a value'),
+  },
+  async ({ projectId, itemId, fieldId, valueType, value, clear }) => safe(() => {
+    const args = ['project', 'item-edit', '--id', itemId, '--project-id', projectId, '--field-id', fieldId];
+    if (clear) {
+      args.push('--clear');
+    } else {
+      if (value === undefined) throw new Error('value is required unless clear=true');
+      const flag = { text: '--text', number: '--number', date: '--date', single_select: '--single-select-option-id', iteration: '--iteration-id' }[valueType];
+      args.push(flag, value);
+    }
+    gh(...args);
+    return text('Field updated.');
+  }),
+);
+
+server.tool(
+  'gh_project_item_archive',
+  'Archive (or unarchive) an item on a project board without deleting the underlying issue/PR.',
+  {
+    owner: z.string().describe('Project owner login'),
+    number: z.number().describe('Project number'),
+    itemId: z.string().describe('Project item node ID'),
+    undo: z.boolean().optional().describe('Unarchive instead of archive'),
+  },
+  async ({ owner, number, itemId, undo }) => safe(() => {
+    const args = ['project', 'item-archive', String(number), '--owner', owner, '--id', itemId];
+    if (undo) args.push('--undo');
+    gh(...args);
+    return text(undo ? 'Unarchived.' : 'Archived.');
+  }),
+);
+
+// ── Views (read-only — creation/layout requires Playwright, see tools-views.mjs) ──
+
+server.tool(
+  'gh_project_views_list',
+  'List a project\'s views (name, number, layout, createdAt) via GraphQL. Read-only — GitHub\'s API has no mutation for creating or changing view layout; use gh_project_view_create for that.',
+  {
+    owner: z.string().describe('Project owner login'),
+    number: z.number().describe('Project number'),
+  },
+  async ({ owner, number }) => safe(() => {
+    const q = `{ user(login: "${owner}") { projectV2(number: ${number}) { views(first: 30) { nodes { name number createdAt layout } } } } }`;
+    const r = gql(q);
+    return text(r.data.user?.projectV2?.views?.nodes ?? []);
+  }),
+);
+
+// ── Issues & labels ──────────────────────────────────────────────────────────
+
+server.tool(
+  'gh_issue_create',
+  'Create an issue in a repo. Body is written via a temp file to avoid shell-escaping issues with newlines/quotes.',
+  {
+    owner: z.string().describe('Repo owner login'),
+    repo: z.string().describe('Repo name (without owner)'),
+    title: z.string().describe('Issue title'),
+    body: z.string().optional().describe('Issue body (markdown)'),
+    labels: z.array(z.string()).optional().describe('Labels to apply (must already exist — use gh_label_ensure first)'),
+    milestone: z.string().optional().describe('Milestone title (not number) to assign'),
+  },
+  async ({ owner, repo, title, body, labels, milestone }) => safe(() => {
+    const tmpFile = join(tmpdir(), `gh-issue-body-${Date.now()}.md`);
+    writeFileSync(tmpFile, body ?? '', 'utf8');
+    try {
+      const args = ['issue', 'create', '--repo', `${owner}/${repo}`, '--title', title, '--body-file', tmpFile];
+      for (const l of labels ?? []) args.push('--label', l);
+      if (milestone) args.push('--milestone', milestone);
+      const r = gh(...args);
+      return text({ url: r.stdout });
+    } finally {
+      try { unlinkSync(tmpFile); } catch { /* best effort */ }
+    }
+  }),
+);
+
+server.tool(
+  'gh_issue_list',
+  'List issues in a repo, including each issue\'s GraphQL node id (needed by gh_subissue_link).',
+  {
+    owner: z.string().describe('Repo owner login'),
+    repo: z.string().describe('Repo name (without owner)'),
+    state: z.enum(['open', 'closed', 'all']).optional().describe('Filter by state (default: open)'),
+    limit: z.number().optional().describe('Max issues to return (default 200)'),
+  },
+  async ({ owner, repo, state, limit }) => safe(() => {
+    const r = gh('issue', 'list', '--repo', `${owner}/${repo}`, '--state', state ?? 'open', '--limit', String(limit ?? 200), '--json', 'id,number,title,url,state,labels');
+    return text(JSON.parse(r.stdout));
+  }),
+);
+
+server.tool(
+  'gh_label_ensure',
+  'Create a label in a repo if it does not already exist (idempotent — safe to call every time before using a label).',
+  {
+    owner: z.string().describe('Repo owner login'),
+    repo: z.string().describe('Repo name (without owner)'),
+    name: z.string().describe('Label name'),
+    color: z.string().describe('Hex color, no leading #, e.g. "84b6eb"'),
+    description: z.string().optional(),
+  },
+  async ({ owner, repo, name, color, description }) => safe(() => {
+    const existingRaw = gh('label', 'list', '--repo', `${owner}/${repo}`, '--json', 'name');
+    const existing = new Set(JSON.parse(existingRaw.stdout).map((l) => l.name));
+    if (existing.has(name)) return text(`Label "${name}" already exists — skipped.`);
+    const args = ['label', 'create', name, '--repo', `${owner}/${repo}`, '--color', color];
+    if (description) args.push('--description', description);
+    gh(...args);
+    return text(`Created label "${name}".`);
+  }),
+);
+
+// ── Sub-issues & status updates (GraphQL — no gh CLI subcommand exists) ───────
+
+server.tool(
+  'gh_subissue_link',
+  'Link an issue as a sub-issue of a parent (epic) issue. Both IDs must be GraphQL node IDs (not issue numbers) — get them from the `id` field returned by gh_issue_list.',
+  {
+    parentNodeId: z.string().describe('Parent (epic) issue GraphQL node ID'),
+    childNodeId: z.string().describe('Child issue GraphQL node ID to attach as a sub-issue'),
+  },
+  async ({ parentNodeId, childNodeId }) => safe(() => {
+    const q = `mutation($p:ID!,$c:ID!){addSubIssue(input:{issueId:$p,subIssueId:$c}){issue{number}subIssue{number}}}`;
+    const r = gql(q, '-f', `p=${parentNodeId}`, '-f', `c=${childNodeId}`);
+    return text(r.data);
+  }),
+);
+
+server.tool(
+  'gh_status_update_create',
+  'Post a status update on a project (the "Add status update" feature on the project overview page). Requires project write scope.',
+  {
+    projectId: z.string().describe('Project node ID'),
+    status: z.enum(['ON_TRACK', 'AT_RISK', 'OFF_TRACK', 'COMPLETE', 'INACTIVE']).describe('Status value'),
+    body: z.string().optional().describe('Status update body (markdown)'),
+  },
+  async ({ projectId, status, body }) => safe(() => {
+    const q = `mutation($p:ID!,$s:ProjectV2StatusUpdateStatus!,$b:String){createProjectV2StatusUpdate(input:{projectId:$p,status:$s,body:$b}){statusUpdate{id status}}}`;
+    const args = ['-f', `p=${projectId}`, '-f', `s=${status}`];
+    if (body) args.push('-f', `b=${body}`);
+    const r = gql(q, ...args);
+    return text(r.data);
+  }),
+);
+
+registerViewTools(server);
+
+const transport = new StdioServerTransport();
+await server.connect(transport);
