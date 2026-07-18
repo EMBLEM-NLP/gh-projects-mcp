@@ -33,6 +33,21 @@ async function safe(fn) {
   try { return await fn(); } catch (err) { return errorText(err); }
 }
 
+// Resolve whether an owner is a user or an organization, so GraphQL queries pick
+// the correct root field. GitHub's /users/{login} endpoint answers for both and
+// returns type "User" | "Organization". Cached per process.
+const _ownerRootCache = new Map();
+function ownerRoot(owner) {
+  if (_ownerRootCache.has(owner)) return _ownerRootCache.get(owner);
+  let root = 'user';
+  try {
+    const r = gh('api', `users/${owner}`, '--jq', '.type');
+    if (r.stdout.trim() === 'Organization') root = 'organization';
+  } catch { /* default to user on any lookup failure */ }
+  _ownerRootCache.set(owner, root);
+  return root;
+}
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 server.tool(
@@ -69,10 +84,11 @@ server.tool(
     const project = JSON.parse(r.stdout);
     let views = [];
     try {
-      const q = `{ user(login: "${owner}") { projectV2(number: ${number}) { createdAt updatedAt views(first: 20) { nodes { name number createdAt layout } } } } }`;
+      const root = ownerRoot(owner);
+      const q = `{ ${root}(login: "${owner}") { projectV2(number: ${number}) { createdAt updatedAt views(first: 20) { nodes { name number createdAt layout } } } } }`;
       const vr = gql(q);
-      views = vr.data.user?.projectV2?.views?.nodes ?? [];
-    } catch { /* org-owned project or view query unavailable — omit views */ }
+      views = vr.data[root]?.projectV2?.views?.nodes ?? [];
+    } catch { /* view query unavailable — omit views */ }
     return text({ ...project, views });
   }),
 );
@@ -87,6 +103,37 @@ server.tool(
   async ({ owner, title }) => safe(() => {
     const r = gh('project', 'create', '--owner', owner, '--title', title, '--format', 'json');
     return text(JSON.parse(r.stdout));
+  }),
+);
+
+server.tool(
+  'gh_project_edit',
+  'Edit a project\'s metadata: title, description (shortDescription), README body, visibility, and open/closed state. Pass only the fields you want to change. Maps to `gh project edit` (title/description/readme/visibility) and `gh project close`/`--undo` (closed).',
+  {
+    owner: z.string().describe('Project owner login'),
+    number: z.number().describe('Project number'),
+    title: z.string().optional().describe('New title'),
+    description: z.string().optional().describe('New short description'),
+    readme: z.string().optional().describe('New README body (markdown)'),
+    visibility: z.enum(['PUBLIC', 'PRIVATE']).optional().describe('Project visibility'),
+    closed: z.boolean().optional().describe('true = close the project, false = reopen it'),
+  },
+  async ({ owner, number, title, description, readme, visibility, closed }) => safe(() => {
+    const changed = [];
+    const editArgs = ['project', 'edit', String(number), '--owner', owner];
+    if (title !== undefined) { editArgs.push('--title', title); changed.push('title'); }
+    if (description !== undefined) { editArgs.push('--description', description); changed.push('description'); }
+    if (readme !== undefined) { editArgs.push('--readme', readme); changed.push('readme'); }
+    if (visibility !== undefined) { editArgs.push('--visibility', visibility); changed.push('visibility'); }
+    if (changed.length) gh(...editArgs);
+    if (closed !== undefined) {
+      const closeArgs = ['project', 'close', String(number), '--owner', owner];
+      if (!closed) closeArgs.push('--undo');
+      gh(...closeArgs);
+      changed.push(closed ? 'closed' : 'reopened');
+    }
+    if (!changed.length) throw new Error('Nothing to edit — pass at least one of title/description/readme/visibility/closed.');
+    return text(`Updated: ${changed.join(', ')}.`);
   }),
 );
 
@@ -224,9 +271,10 @@ server.tool(
     number: z.number().describe('Project number'),
   },
   async ({ owner, number }) => safe(() => {
-    const q = `{ user(login: "${owner}") { projectV2(number: ${number}) { views(first: 30) { nodes { name number createdAt layout } } } } }`;
+    const root = ownerRoot(owner);
+    const q = `{ ${root}(login: "${owner}") { projectV2(number: ${number}) { views(first: 30) { nodes { name number createdAt layout } } } } }`;
     const r = gql(q);
-    return text(r.data.user?.projectV2?.views?.nodes ?? []);
+    return text(r.data[root]?.projectV2?.views?.nodes ?? []);
   }),
 );
 

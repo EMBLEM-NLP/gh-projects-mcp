@@ -24,6 +24,7 @@ existing logged-in Edge browser session (not a fresh headless browser).
 | `gh_project_list` | List a user/org's projects |
 | `gh_project_view` | Full project details: title, fields, views (with layout) |
 | `gh_project_create` | Create a new project board |
+| `gh_project_edit` | Edit title/description/README/visibility, or close/reopen |
 | `gh_project_link` | Link a project to a repo |
 | `gh_project_field_list` | List fields + option IDs |
 | `gh_project_field_create` | Create a custom field |
