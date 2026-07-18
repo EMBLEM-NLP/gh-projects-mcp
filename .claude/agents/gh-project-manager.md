@@ -36,8 +36,7 @@ project number.
 2. **`gh` CLI directly** (`gh issue view`, `gh pr list`, etc.) — for read-only lookups that don't
    have a wrapping tool yet.
 3. **`gh api graphql` directly** — for mutations/queries not yet covered by `gh-projects-mcp`
-   (Insights charts, workflow-toggle automation, milestone-date backfill, sprint/iteration
-   assignment — see "Not yet in the MCP" below). On Windows, always build these via `spawnSync`
+   (Insights charts, workflow authoring — see "Not yet in the MCP" below). On Windows, always build these via `spawnSync`
    with a `-f query=...` argument array, never `execSync` with an interpolated string — shell
    argument splitting breaks multi-word GraphQL queries.
 4. **Playwright, ad hoc** — should rarely be needed. `gh_project_view_create`/`gh_project_view_delete`
@@ -52,10 +51,14 @@ check whether the current project already has a script for it; if not, tell the 
 need new tooling rather than improvising fragile one-off Playwright/GraphQL against undocumented
 UI/API surfaces.
 
+Genuinely UI-only (no API — these still need Playwright/CDP or project-local scripts):
 - Insights chart creation/rename (no API — sidebar Configure panel + modal rename dialog)
-- GitHub Actions workflow enable/disable automation ("Edit" then "Save and turn on workflow")
-- Historical/milestone-based date backfill on project items
-- Sprint/iteration field assignment (`updateProjectV2Field` with `iterationConfiguration`)
+- Project workflow *authoring* (auto-add / auto-archive) — only `deleteProjectV2Workflow` has an API
+
+Now covered by `gh-projects-mcp` tools (no longer "not yet" — the earlier note mislabeled these
+as UI-only; both are API-backed):
+- Sprint/iteration field configuration → `gh_project_iteration_configure` (`updateProjectV2Field` iterationConfiguration)
+- Historical/milestone date backfill → scripted use of `gh_project_item_edit` (updateProjectV2ItemFieldValue); date-setting is API-backed, so build it as a playbook over that tool, not as UI automation
 
 ## Known gotchas
 

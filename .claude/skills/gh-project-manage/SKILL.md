@@ -43,9 +43,13 @@ Two kinds of intent need different handling — decide which before doing anythi
 | "what projects do I have" | `gh_project_list` |
 | "show me project details / fields / views" | `gh_project_view` (also returns views+layouts) |
 | "create a new project board" | `gh_project_create`, then `gh_project_field_create` per custom field |
+| "edit the project's title/description/README/visibility, or close/reopen it" | `gh_project_edit` |
 | "link this repo to the project" | `gh_project_link` |
 | "add an issue to the board" | `gh_project_item_add` (existing issue) or `gh_issue_create` + `gh_project_item_add` (new issue) |
+| "add a draft item (no repo issue)" | `gh_project_item_create`; edit it with `gh_project_draft_edit`; turn it into a real issue with `gh_project_draft_convert` |
 | "set priority/status/owner on an item" | `gh_project_field_list` (get field + option IDs) → `gh_project_item_edit` |
+| "add/rename/recolor a single-select field's options" | `gh_project_field_option_update` (pass the FULL option set — it replaces; delete-guarded unless `allowRemove:true`) |
+| "set up a sprint/iteration field's iterations" | `gh_project_iteration_configure` |
 | "add/fix a view" | `gh_project_view_create` (idempotent — skips existing names unless `reapply: true`) |
 | "delete a view" | `gh_project_view_delete` |
 | "post a status update" | `gh_status_update_create` |
