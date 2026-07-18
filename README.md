@@ -28,8 +28,13 @@ existing logged-in Edge browser session (not a fresh headless browser).
 | `gh_project_link` | Link a project to a repo |
 | `gh_project_field_list` | List fields + option IDs |
 | `gh_project_field_create` | Create a custom field |
+| `gh_project_field_option_update` | Add/rename/recolor SINGLE_SELECT options (delete-guarded) |
+| `gh_project_iteration_configure` | Configure an ITERATION (sprint) field's iterations |
 | `gh_project_item_list` | List items on a board |
 | `gh_project_item_add` | Add an issue/PR to a board |
+| `gh_project_item_create` | Create a draft-issue item directly on a board |
+| `gh_project_draft_edit` | Edit a draft item's title/body |
+| `gh_project_draft_convert` | Convert a draft item into a real repo issue |
 | `gh_project_item_edit` | Set/clear a field value on an item |
 | `gh_project_item_archive` | Archive/unarchive an item |
 | `gh_project_views_list` | List views (read-only, GraphQL) |

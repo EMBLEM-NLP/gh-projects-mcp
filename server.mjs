@@ -188,6 +188,63 @@ server.tool(
   }),
 );
 
+server.tool(
+  'gh_project_field_option_update',
+  'Update the options of an existing SINGLE_SELECT field (add / rename / recolor). WARNING: the underlying updateProjectV2Field mutation REPLACES the entire option set — options you omit are deleted (along with their item assignments). This tool guards against that: it fetches the current options and, unless allowRemove=true, errors if your list drops any existing option name. Pass the FULL desired option set.',
+  {
+    fieldId: z.string().describe('SINGLE_SELECT field node ID (from gh_project_field_list)'),
+    options: z.array(z.object({
+      name: z.string(),
+      color: z.enum(['GRAY', 'BLUE', 'GREEN', 'YELLOW', 'ORANGE', 'RED', 'PINK', 'PURPLE']).optional().describe('Default GRAY'),
+      description: z.string().optional(),
+    })).min(1).describe('The COMPLETE desired option list (include existing options you want to keep)'),
+    allowRemove: z.boolean().optional().describe('Permit dropping existing options (deletes them + their assignments). Default false.'),
+  },
+  async ({ fieldId, options, allowRemove }) => safe(() => {
+    // Fetch current option names to guard against accidental deletion.
+    const cur = gql(`{ node(id: "${fieldId}") { ... on ProjectV2SingleSelectField { name options { name } } } }`);
+    const node = cur.data.node;
+    if (!node) throw new Error('fieldId did not resolve to a ProjectV2SingleSelectField.');
+    const currentNames = (node.options ?? []).map((o) => o.name);
+    const desiredNames = options.map((o) => o.name);
+    const removed = currentNames.filter((n) => !desiredNames.includes(n));
+    if (removed.length && !allowRemove) {
+      throw new Error(`This would DELETE options not in your list: ${removed.join(', ')}. Include them, or pass allowRemove:true to confirm deletion.`);
+    }
+    const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const optsLiteral = options.map((o) =>
+      `{name: "${esc(o.name)}", color: ${o.color ?? 'GRAY'}, description: "${esc(o.description ?? '')}"}`
+    ).join(', ');
+    const q = `mutation { updateProjectV2Field(input: {fieldId: "${fieldId}", singleSelectOptions: [${optsLiteral}]}) { projectV2Field { ... on ProjectV2SingleSelectField { options { id name } } } } }`;
+    const r = gql(q);
+    return text(r.data.updateProjectV2Field.projectV2Field);
+  }),
+);
+
+server.tool(
+  'gh_project_iteration_configure',
+  'Configure an ITERATION (sprint) field: set its iteration cadence and iterations. Like option editing, updateProjectV2Field replaces the iteration configuration — pass the full set of iterations you want. Each iteration is defined by a startDate (YYYY-MM-DD) and a duration in days.',
+  {
+    fieldId: z.string().describe('ITERATION field node ID (from gh_project_field_list)'),
+    iterations: z.array(z.object({
+      startDate: z.string().describe('ISO date YYYY-MM-DD'),
+      duration: z.number().describe('Length in days'),
+      title: z.string().optional(),
+    })).min(1).describe('The iterations to configure'),
+  },
+  async ({ fieldId, iterations }) => safe(() => {
+    const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const iterLiteral = iterations.map((it) => {
+      const parts = [`startDate: "${esc(it.startDate)}"`, `duration: ${it.duration}`];
+      if (it.title) parts.push(`title: "${esc(it.title)}"`);
+      return `{${parts.join(', ')}}`;
+    }).join(', ');
+    const q = `mutation { updateProjectV2Field(input: {fieldId: "${fieldId}", iterationConfiguration: {iterations: [${iterLiteral}]}}) { projectV2Field { ... on ProjectV2IterationField { configuration { iterations { title startDate duration } } } } } }`;
+    const r = gql(q);
+    return text(r.data.updateProjectV2Field.projectV2Field);
+  }),
+);
+
 // ── Items ────────────────────────────────────────────────────────────────────
 
 server.tool(
@@ -216,6 +273,65 @@ server.tool(
   async ({ owner, number, url }) => safe(() => {
     const r = gh('project', 'item-add', String(number), '--owner', owner, '--url', url, '--format', 'json');
     return text(JSON.parse(r.stdout));
+  }),
+);
+
+server.tool(
+  'gh_project_item_create',
+  'Create a draft-issue item directly on a project board (no repo issue). Draft issues live only on the board until converted with gh_project_draft_convert. Returns the created item (with its id).',
+  {
+    owner: z.string().describe('Project owner login'),
+    number: z.number().describe('Project number'),
+    title: z.string().describe('Draft issue title'),
+    body: z.string().optional().describe('Draft issue body (markdown)'),
+  },
+  async ({ owner, number, title, body }) => safe(() => {
+    const args = ['project', 'item-create', String(number), '--owner', owner, '--title', title, '--format', 'json'];
+    if (body !== undefined) args.push('--body', body);
+    const r = gh(...args);
+    return text(JSON.parse(r.stdout));
+  }),
+);
+
+server.tool(
+  'gh_project_draft_edit',
+  'Edit a draft issue item\'s title and/or body (updateProjectV2DraftIssue). Accepts the project ITEM id (PVTI_…, from gh_project_item_create/list) and resolves the draft-content id (DI_…) that gh requires; a DI_ id is also accepted directly. For draft items only; use gh_project_item_edit for field values.',
+  {
+    itemId: z.string().describe('Draft item node ID (PVTI_…) or draft-content id (DI_…)'),
+    title: z.string().optional().describe('New title'),
+    body: z.string().optional().describe('New body (markdown)'),
+  },
+  async ({ itemId, title, body }) => safe(() => {
+    if (title === undefined && body === undefined) throw new Error('Pass at least one of title/body.');
+    // gh project item-edit --id expects the draft CONTENT id (DI_…), not the item id (PVTI_…).
+    let draftId = itemId;
+    if (!itemId.startsWith('DI_')) {
+      const q = `{ node(id: "${itemId}") { ... on ProjectV2Item { content { __typename ... on DraftIssue { id } } } } }`;
+      const contentId = gql(q).data.node?.content?.id;
+      if (!contentId) throw new Error('Could not resolve a draft-content id from that item id — is it a draft issue item?');
+      draftId = contentId;
+    }
+    const args = ['project', 'item-edit', '--id', draftId, '--format', 'json'];
+    if (title !== undefined) args.push('--title', title);
+    if (body !== undefined) args.push('--body', body);
+    const r = gh(...args);
+    return text(r.stdout || 'Draft updated.');
+  }),
+);
+
+server.tool(
+  'gh_project_draft_convert',
+  'Convert a draft-issue item into a real repository issue (convertProjectV2DraftIssueItemToIssue). The item keeps its board field values.',
+  {
+    itemId: z.string().describe('Draft item node ID'),
+    repoOwner: z.string().describe('Owner of the repo to create the issue in'),
+    repo: z.string().describe('Repo name (without owner) to create the issue in'),
+  },
+  async ({ itemId, repoOwner, repo }) => safe(() => {
+    const repoId = gh('api', `repos/${repoOwner}/${repo}`, '--jq', '.node_id').stdout.trim();
+    const q = `mutation { convertProjectV2DraftIssueItemToIssue(input: {itemId: "${itemId}", repositoryId: "${repoId}"}) { item { id content { ... on Issue { number url } } } } }`;
+    const r = gql(q);
+    return text(r.data.convertProjectV2DraftIssueItemToIssue.item);
   }),
 );
 
