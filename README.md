@@ -25,11 +25,16 @@ existing logged-in Edge browser session (not a fresh headless browser).
 | `gh_project_view` | Full project details: title, fields, views (with layout) |
 | `gh_project_create` | Create a new project board |
 | `gh_project_edit` | Edit title/description/README/visibility, or close/reopen |
+| `gh_project_delete` | Delete a project (confirm-gated) |
+| `gh_project_copy` | Copy a project to a new one |
+| `gh_project_unlink` | Unlink a project from a repo/team |
+| `gh_project_mark_template` | Mark/unmark an org project as a template |
 | `gh_project_link` | Link a project to a repo |
 | `gh_project_field_list` | List fields + option IDs |
 | `gh_project_field_create` | Create a custom field |
 | `gh_project_field_option_update` | Add/rename/recolor SINGLE_SELECT options (delete-guarded) |
 | `gh_project_iteration_configure` | Configure an ITERATION (sprint) field's iterations |
+| `gh_project_field_delete` | Delete a custom field (confirm-gated) |
 | `gh_project_item_list` | List items on a board |
 | `gh_project_item_add` | Add an issue/PR to a board |
 | `gh_project_item_create` | Create a draft-issue item directly on a board |
@@ -37,6 +42,8 @@ existing logged-in Edge browser session (not a fresh headless browser).
 | `gh_project_draft_convert` | Convert a draft item into a real repo issue |
 | `gh_project_item_edit` | Set/clear a field value on an item |
 | `gh_project_item_archive` | Archive/unarchive an item |
+| `gh_project_item_delete` | Remove an item from the board (confirm-gated) |
+| `gh_project_item_move` | Reorder an item's board position |
 | `gh_project_views_list` | List views (read-only, GraphQL) |
 | `gh_project_view_create` | Create/repair views (Playwright — see above) |
 | `gh_project_view_delete` | Delete a view (Playwright) |
@@ -44,6 +51,11 @@ existing logged-in Edge browser session (not a fresh headless browser).
 | `gh_issue_list` | List issues (includes GraphQL node `id`) |
 | `gh_label_ensure` | Idempotent label creation |
 | `gh_subissue_link` | Link a sub-issue to a parent/epic |
+| `gh_subissue_unlink` | Remove a sub-issue link |
+| `gh_subissue_reprioritize` | Reorder a sub-issue within its parent |
+| `gh_status_update_list` | List a project's status updates |
+| `gh_status_update_edit` | Edit a status update |
+| `gh_status_update_delete` | Delete a status update (confirm-gated) |
 | `gh_status_update_create` | Post a project status update |
 
 ## Requirements
@@ -95,9 +107,11 @@ cp .claude/agents/gh-project-manager.md ~/.claude/agents/
 
 ## Not yet covered
 
-Some more exotic, UI-only GitHub Projects features aren't ported here yet: Insights chart
-creation/rename, GitHub Actions workflow toggling, milestone-date backfill, sprint/iteration field
-assignment. These remain doable via `gh api graphql` / ad hoc Playwright, just not wrapped as tools.
+Two GitHub Projects features are genuinely UI-only (no API) and remain unported: **Insights chart**
+creation/rename, and project **workflow authoring** (auto-add/auto-archive — only
+`deleteProjectV2Workflow` has an API). Both need Playwright/CDP like the view tools. (Iteration/sprint
+config and date-setting are API-backed and *are* covered — `gh_project_iteration_configure` /
+`gh_project_item_edit`.)
 
 ## License
 

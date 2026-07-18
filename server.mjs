@@ -138,6 +138,74 @@ server.tool(
 );
 
 server.tool(
+  'gh_project_delete',
+  'Permanently DELETE a project board and all its items. Irreversible — requires confirm:true.',
+  {
+    owner: z.string().describe('Project owner login'),
+    number: z.number().describe('Project number'),
+    confirm: z.boolean().describe('Must be true to proceed — cannot be undone'),
+  },
+  async ({ owner, number, confirm }) => safe(() => {
+    if (!confirm) throw new Error('Refusing to delete project without confirm:true.');
+    gh('project', 'delete', String(number), '--owner', owner);
+    return text(`Deleted project #${number}.`);
+  }),
+);
+
+server.tool(
+  'gh_project_copy',
+  'Copy a project to a new one (fields/views copied; items only with drafts:true).',
+  {
+    sourceOwner: z.string().describe('Owner of the source project'),
+    number: z.number().describe('Source project number'),
+    targetOwner: z.string().describe('Owner for the new copy'),
+    title: z.string().describe('Title for the new project'),
+    drafts: z.boolean().optional().describe('Include draft issues'),
+  },
+  async ({ sourceOwner, number, targetOwner, title, drafts }) => safe(() => {
+    const args = ['project', 'copy', String(number), '--source-owner', sourceOwner, '--target-owner', targetOwner, '--title', title, '--format', 'json'];
+    if (drafts) args.push('--drafts');
+    const r = gh(...args);
+    return text(JSON.parse(r.stdout));
+  }),
+);
+
+server.tool(
+  'gh_project_unlink',
+  'Unlink a project from a repository or team (mirror of gh_project_link).',
+  {
+    owner: z.string().describe('Project owner login'),
+    number: z.number().describe('Project number'),
+    repo: z.string().optional().describe('Repository to unlink, as "owner/repo"'),
+    team: z.string().optional().describe('Team to unlink, as "org/team-slug"'),
+  },
+  async ({ owner, number, repo, team }) => safe(() => {
+    if (!repo && !team) throw new Error('Pass repo or team to unlink.');
+    const args = ['project', 'unlink', String(number), '--owner', owner];
+    if (repo) args.push('--repo', repo);
+    if (team) args.push('--team', team);
+    gh(...args);
+    return text('Unlinked.');
+  }),
+);
+
+server.tool(
+  'gh_project_mark_template',
+  'Mark (or, with undo:true, unmark) an ORG-owned project as a template. User-owned projects cannot be templates.',
+  {
+    owner: z.string().describe('Org owner login'),
+    number: z.number().describe('Project number'),
+    undo: z.boolean().optional().describe('Unmark instead of mark'),
+  },
+  async ({ owner, number, undo }) => safe(() => {
+    const args = ['project', 'mark-template', String(number), '--owner', owner];
+    if (undo) args.push('--undo');
+    gh(...args);
+    return text(undo ? 'Unmarked as template.' : 'Marked as template.');
+  }),
+);
+
+server.tool(
   'gh_project_link',
   'Link a GitHub Project to a repository (or team), so items in that repo can be auto-added and the project shows up on the repo page.',
   {
@@ -245,6 +313,20 @@ server.tool(
   }),
 );
 
+server.tool(
+  'gh_project_field_delete',
+  'Permanently DELETE a custom field and its values on all items. Destructive — requires confirm:true. Built-in fields cannot be deleted.',
+  {
+    fieldId: z.string().describe('Field node ID (from gh_project_field_list)'),
+    confirm: z.boolean().describe('Must be true to proceed'),
+  },
+  async ({ fieldId, confirm }) => safe(() => {
+    if (!confirm) throw new Error('Refusing to delete field without confirm:true.');
+    gh('project', 'field-delete', '--id', fieldId);
+    return text('Field deleted.');
+  }),
+);
+
 // ── Items ────────────────────────────────────────────────────────────────────
 
 server.tool(
@@ -254,9 +336,12 @@ server.tool(
     owner: z.string().describe('Project owner login'),
     number: z.number().describe('Project number'),
     limit: z.number().optional().describe('Max items to return (default 200)'),
+    query: z.string().optional().describe('Projects filter syntax, e.g. "assignee:octocat -status:Done"'),
   },
-  async ({ owner, number, limit }) => safe(() => {
-    const r = gh('project', 'item-list', String(number), '--owner', owner, '--format', 'json', '--limit', String(limit ?? 200));
+  async ({ owner, number, limit, query }) => safe(() => {
+    const args = ['project', 'item-list', String(number), '--owner', owner, '--format', 'json', '--limit', String(limit ?? 200)];
+    if (query) args.push('--query', query);
+    const r = gh(...args);
     const parsed = JSON.parse(r.stdout);
     return text(parsed.items ?? parsed);
   }),
@@ -377,6 +462,39 @@ server.tool(
   }),
 );
 
+server.tool(
+  'gh_project_item_delete',
+  'Remove an item from a project board permanently (distinct from archive). Does NOT delete the underlying issue/PR. Destructive — requires confirm:true.',
+  {
+    owner: z.string().describe('Project owner login'),
+    number: z.number().describe('Project number'),
+    itemId: z.string().describe('Project item node ID'),
+    confirm: z.boolean().describe('Must be true to proceed'),
+  },
+  async ({ owner, number, itemId, confirm }) => safe(() => {
+    if (!confirm) throw new Error('Refusing to delete item without confirm:true.');
+    gh('project', 'item-delete', String(number), '--owner', owner, '--id', itemId);
+    return text('Item removed from board.');
+  }),
+);
+
+server.tool(
+  'gh_project_item_move',
+  'Reorder an item on the board. Places it after afterItemId, or at the top if omitted (updateProjectV2ItemPosition).',
+  {
+    projectId: z.string().describe('Project node ID'),
+    itemId: z.string().describe('Item node ID to move'),
+    afterItemId: z.string().optional().describe('Place the item after this item; omit to move to the top'),
+  },
+  async ({ projectId, itemId, afterItemId }) => safe(() => {
+    const decls = ['$p:ID!', '$i:ID!']; const inputs = ['projectId:$p', 'itemId:$i']; const args = ['-f', `p=${projectId}`, '-f', `i=${itemId}`];
+    if (afterItemId) { decls.push('$a:ID'); inputs.push('afterId:$a'); args.push('-f', `a=${afterItemId}`); }
+    const q = `mutation(${decls.join(',')}){updateProjectV2ItemPosition(input:{${inputs.join(',')}}){items(first:1){nodes{id}}}}`;
+    gql(q, ...args);
+    return text('Item moved.');
+  }),
+);
+
 // ── Views (read-only — creation/layout requires Playwright, see tools-views.mjs) ──
 
 server.tool(
@@ -488,6 +606,86 @@ server.tool(
     if (body) args.push('-f', `b=${body}`);
     const r = gql(q, ...args);
     return text(r.data);
+  }),
+);
+
+server.tool(
+  'gh_subissue_unlink',
+  'Remove a sub-issue link (removeSubIssue). Detaches the child; deletes neither issue.',
+  {
+    parentNodeId: z.string().describe('Parent issue GraphQL node ID'),
+    childNodeId: z.string().describe('Sub-issue GraphQL node ID to detach'),
+  },
+  async ({ parentNodeId, childNodeId }) => safe(() => {
+    const q = `mutation($p:ID!,$c:ID!){removeSubIssue(input:{issueId:$p,subIssueId:$c}){issue{number}}}`;
+    const r = gql(q, '-f', `p=${parentNodeId}`, '-f', `c=${childNodeId}`);
+    return text(r.data);
+  }),
+);
+
+server.tool(
+  'gh_subissue_reprioritize',
+  'Reorder a sub-issue within its parent (reprioritizeSubIssue). Places it after afterChildNodeId, or at the top if omitted.',
+  {
+    parentNodeId: z.string().describe('Parent issue node ID'),
+    childNodeId: z.string().describe('Sub-issue node ID to move'),
+    afterChildNodeId: z.string().optional().describe('Place after this sub-issue; omit for top'),
+  },
+  async ({ parentNodeId, childNodeId, afterChildNodeId }) => safe(() => {
+    const decls = ['$p:ID!', '$c:ID!']; const inputs = ['issueId:$p', 'subIssueId:$c']; const args = ['-f', `p=${parentNodeId}`, '-f', `c=${childNodeId}`];
+    if (afterChildNodeId) { decls.push('$a:ID'); inputs.push('afterId:$a'); args.push('-f', `a=${afterChildNodeId}`); }
+    const q = `mutation(${decls.join(',')}){reprioritizeSubIssue(input:{${inputs.join(',')}}){issue{number}}}`;
+    const r = gql(q, ...args);
+    return text(r.data);
+  }),
+);
+
+server.tool(
+  'gh_status_update_list',
+  'List a project\'s status updates (id, status, body, dates).',
+  { projectId: z.string().describe('Project node ID') },
+  async ({ projectId }) => safe(() => {
+    const q = `query($p:ID!){node(id:$p){... on ProjectV2{statusUpdates(first:20){nodes{id status body startDate targetDate updatedAt}}}}}`;
+    const r = gql(q, '-f', `p=${projectId}`);
+    return text(r.data.node?.statusUpdates?.nodes ?? []);
+  }),
+);
+
+server.tool(
+  'gh_status_update_edit',
+  'Edit an existing project status update (any of status/body/startDate/targetDate).',
+  {
+    statusUpdateId: z.string().describe('Status update node ID (from gh_status_update_list)'),
+    status: z.enum(['ON_TRACK', 'AT_RISK', 'OFF_TRACK', 'COMPLETE', 'INACTIVE']).optional(),
+    body: z.string().optional(),
+    startDate: z.string().optional().describe('YYYY-MM-DD'),
+    targetDate: z.string().optional().describe('YYYY-MM-DD'),
+  },
+  async ({ statusUpdateId, status, body, startDate, targetDate }) => safe(() => {
+    const decls = ['$id:ID!']; const inputs = ['statusUpdateId:$id']; const args = ['-f', `id=${statusUpdateId}`];
+    if (status !== undefined) { decls.push('$s:ProjectV2StatusUpdateStatus'); inputs.push('status:$s'); args.push('-f', `s=${status}`); }
+    if (body !== undefined) { decls.push('$b:String'); inputs.push('body:$b'); args.push('-f', `b=${body}`); }
+    if (startDate !== undefined) { decls.push('$sd:Date'); inputs.push('startDate:$sd'); args.push('-f', `sd=${startDate}`); }
+    if (targetDate !== undefined) { decls.push('$td:Date'); inputs.push('targetDate:$td'); args.push('-f', `td=${targetDate}`); }
+    if (decls.length === 1) throw new Error('Pass at least one field to edit.');
+    const q = `mutation(${decls.join(',')}){updateProjectV2StatusUpdate(input:{${inputs.join(',')}}){statusUpdate{id status}}}`;
+    const r = gql(q, ...args);
+    return text(r.data.updateProjectV2StatusUpdate.statusUpdate);
+  }),
+);
+
+server.tool(
+  'gh_status_update_delete',
+  'Delete a project status update. Destructive — requires confirm:true.',
+  {
+    statusUpdateId: z.string().describe('Status update node ID'),
+    confirm: z.boolean().describe('Must be true to proceed'),
+  },
+  async ({ statusUpdateId, confirm }) => safe(() => {
+    if (!confirm) throw new Error('Refusing to delete status update without confirm:true.');
+    const q = `mutation($id:ID!){deleteProjectV2StatusUpdate(input:{statusUpdateId:$id}){clientMutationId}}`;
+    gql(q, '-f', `id=${statusUpdateId}`);
+    return text('Status update deleted.');
   }),
 );
 
