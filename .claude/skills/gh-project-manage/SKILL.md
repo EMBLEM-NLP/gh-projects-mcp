@@ -81,9 +81,10 @@ happening and don't fight the abstraction:
 - **No API for view creation or layout** — confirmed via GraphQL introspection: there is no
   `createProjectV2View` mutation, and layout (table/board/roadmap) cannot be set any other way.
   `gh_project_view_create` works around this by driving the actual GitHub web UI via Playwright,
-  CDP-attached to your existing logged-in Edge browser (not a fresh headless session — it needs you
-  already signed into github.com in Edge). If it reports "Not authenticated in Edge," sign into
-  GitHub in the Edge window it opens/reuses and retry.
+  **CDP-attaching to an Edge you already have running with remote debugging** (not a fresh headless
+  session). It will **not** open or close your browser: if no DevTools endpoint is on `:9222` it fails
+  with instructions to relaunch Edge yourself with `--remote-debugging-port=9222` (signed into
+  github.com). Tell the user that if they hit that error.
 - **View creation is not instant** — each view takes several seconds (page navigation + UI
   interaction). Don't be surprised if `gh_project_view_create` takes 10-30s per view.
 - **Naming convention** (carried over from prior projects, use unless the user specifies otherwise):
@@ -100,13 +101,18 @@ happening and don't fight the abstraction:
   or the return value of `gh_project_item_add`.
 - **Status update enum values**: `ON_TRACK`, `AT_RISK`, `OFF_TRACK`, `COMPLETE`, `INACTIVE`. Requires
   the token to have project write scope.
-- **Ghost/mismatched views auto-heal**: `gh_project_view_create` deletes any view tab not in your
-  spec, and recreates (delete+create) any existing view whose live layout doesn't match the spec —
-  you don't need to manually clean these up first.
+- **Ghost/mismatched views are NOT pruned by default**: `gh_project_view_create` creates missing
+  views but only **reports** ghost tabs (not in your spec) and layout-mismatched views under
+  `wouldPrune` — it does not delete them unless you pass `pruneGhostViews:true`. `gh_project_view_delete`
+  likewise requires `confirm:true`. This matches the confirm-gate on every other destructive tool.
 
 ## Safety
 
 - Never close/delete issues, merge PRs, or push branches without explicit user confirmation.
+- **View tools are destructive-capable and browser-touching.** `gh_project_view_delete` needs
+  `confirm:true`; `gh_project_view_create` will not prune/recreate views unless `pruneGhostViews:true`;
+  and neither will open or force-close your Edge — they attach to an already-running remote-debugging
+  Edge and otherwise fail with guidance.
 - Never hardcode project/field/item IDs into memory or a skill file — they're project-specific and
   regenerate if a field or project is recreated. Always resolve them fresh via the list/view tools.
 - If a mutation tool errors, read the error text back to the user rather than retrying blindly —

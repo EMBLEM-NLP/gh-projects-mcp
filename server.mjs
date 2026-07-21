@@ -48,6 +48,9 @@ function ownerRoot(owner) {
   return root;
 }
 
+// Escape a string for safe inline insertion into a GraphQL query literal.
+function gqlStr(s) { return String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"'); }
+
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
 server.tool(
@@ -85,7 +88,7 @@ server.tool(
     let views = [];
     try {
       const root = ownerRoot(owner);
-      const q = `{ ${root}(login: "${owner}") { projectV2(number: ${number}) { createdAt updatedAt views(first: 20) { nodes { name number createdAt layout } } } } }`;
+      const q = `{ ${root}(login: "${gqlStr(owner)}") { projectV2(number: ${number}) { createdAt updatedAt views(first: 20) { nodes { name number createdAt layout } } } } }`;
       const vr = gql(q);
       views = vr.data[root]?.projectV2?.views?.nodes ?? [];
     } catch { /* view query unavailable — omit views */ }
@@ -270,7 +273,7 @@ server.tool(
   },
   async ({ fieldId, options, allowRemove }) => safe(() => {
     // Fetch current option names to guard against accidental deletion.
-    const cur = gql(`{ node(id: "${fieldId}") { ... on ProjectV2SingleSelectField { name options { name } } } }`);
+    const cur = gql(`{ node(id: "${gqlStr(fieldId)}") { ... on ProjectV2SingleSelectField { name options { name } } } }`);
     const node = cur.data.node;
     if (!node) throw new Error('fieldId did not resolve to a ProjectV2SingleSelectField.');
     const currentNames = (node.options ?? []).map((o) => o.name);
@@ -391,7 +394,7 @@ server.tool(
     // gh project item-edit --id expects the draft CONTENT id (DI_…), not the item id (PVTI_…).
     let draftId = itemId;
     if (!itemId.startsWith('DI_')) {
-      const q = `{ node(id: "${itemId}") { ... on ProjectV2Item { content { __typename ... on DraftIssue { id } } } } }`;
+      const q = `{ node(id: "${gqlStr(itemId)}") { ... on ProjectV2Item { content { __typename ... on DraftIssue { id } } } } }`;
       const contentId = gql(q).data.node?.content?.id;
       if (!contentId) throw new Error('Could not resolve a draft-content id from that item id — is it a draft issue item?');
       draftId = contentId;
@@ -506,7 +509,7 @@ server.tool(
   },
   async ({ owner, number }) => safe(() => {
     const root = ownerRoot(owner);
-    const q = `{ ${root}(login: "${owner}") { projectV2(number: ${number}) { views(first: 30) { nodes { name number createdAt layout } } } } }`;
+    const q = `{ ${root}(login: "${gqlStr(owner)}") { projectV2(number: ${number}) { views(first: 30) { nodes { name number createdAt layout } } } } }`;
     const r = gql(q);
     return text(r.data[root]?.projectV2?.views?.nodes ?? []);
   }),
