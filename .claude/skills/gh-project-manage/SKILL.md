@@ -1,9 +1,9 @@
 ---
 name: gh-project-manage
 description: Front door for managing any GitHub Project (v2) board — creating projects, fields, items, views, sub-issues, status updates. Routes intent to the right gh-projects-mcp tool and encodes decisions the GitHub API can't (reserved field names, view-layout limitations, naming conventions). Works on any owner/project/repo — not tied to one project. Trigger on "github project", "project board", "gh project", or a github.com/users/*/projects/* or /orgs/*/projects/* URL.
-version: 1.0.0
+version: 1.1.0
 created: 2026-07-15
-lastmod: 2026-07-15
+lastmod: 2026-07-21
 ---
 
 ## Charter
@@ -54,6 +54,9 @@ Two kinds of intent need different handling — decide which before doing anythi
 | "delete a view" | `gh_project_view_delete` |
 | "post a status update" | `gh_status_update_create` |
 | "archive this item" | `gh_project_item_archive` |
+| "open a pull request" | `gh_pr_create` (head = branch to merge from; base defaults to `main`) |
+| "list / check open PRs" | `gh_pr_list` |
+| "merge this PR" | `gh_pr_merge` (**confirm-gated** — requires `confirm:true`; squash + delete-branch by default) |
 
 **Delegate to the `gh-project-manager` subagent** — multi-step work spanning many items or requiring
 judgment across a whole board:
@@ -106,9 +109,33 @@ happening and don't fight the abstraction:
   `wouldPrune` — it does not delete them unless you pass `pruneGhostViews:true`. `gh_project_view_delete`
   likewise requires `confirm:true`. This matches the confirm-gate on every other destructive tool.
 
+## Change workflow (PR-first)
+
+When a task involves changing code or files in a repo (not just project-board metadata), produce a
+reviewable pull request instead of committing straight to the default branch:
+
+1. **Never commit directly to `main`** (or whatever the default branch is). If you're on it, branch first.
+2. **Create a branch** for the change — a short, descriptive name (`feat/…`, `fix/…`, `chore/…`).
+3. **Open a PR with `gh_pr_create`** once the work is pushed: `head` is your branch, `base` is `main`
+   (the default). Put a clear title and body.
+4. **Link the issue in the PR body**: write `Closes #N` so the issue auto-closes when the PR merges.
+5. **Merge with `gh_pr_merge`** (confirm-gated): squash method and delete-branch are the defaults, and
+   it refuses unless you pass `confirm:true`. Only merge when the user has asked you to — otherwise
+   leave the PR open for review.
+
+**Same-repo only — the cross-repo gotcha**: `Closes #N` auto-close and GitHub's "Linked pull requests"
+sidebar **only work when the issue and the PR live in the same repository**. If the fix lands in one
+repo but the tracking issue lives in *another* repo, `Closes owner/repo#N` will **not** auto-close it —
+instead reference it as `Refs owner/repo#N` in the body and close the issue manually after merge. This
+is a GitHub platform limitation, not a bug in these tools — don't burn time trying to make cross-repo
+auto-close work.
+
 ## Safety
 
 - Never close/delete issues, merge PRs, or push branches without explicit user confirmation.
+- **PR merges are confirm-gated and irreversible-ish.** `gh_pr_merge` requires `confirm:true` and, by
+  default, deletes the head branch — only call it when the user has explicitly asked to merge. Prefer
+  leaving PRs open for review (follow the PR-first workflow above rather than committing to `main`).
 - **View tools are destructive-capable and browser-touching.** `gh_project_view_delete` needs
   `confirm:true`; `gh_project_view_create` will not prune/recreate views unless `pruneGhostViews:true`;
   and neither will open or force-close your Edge — they attach to an already-running remote-debugging
