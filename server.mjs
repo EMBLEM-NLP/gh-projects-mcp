@@ -18,8 +18,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gh, gql } from './lib/gql.mjs';
 import { registerViewTools } from './lib/tools-views.mjs';
+import { registerPrTools } from './lib/tools-pr.mjs';
+import { gqlStr, makeOwnerRoot, assertConfirmed, guardOptionRemoval } from './lib/helpers.mjs';
 
-const server = new McpServer({ name: 'gh-projects-mcp', version: '1.0.0' });
+const server = new McpServer({ name: 'gh-projects-mcp', version: '1.4.0' });
 
 function text(t) {
   return { content: [{ type: 'text', text: typeof t === 'string' ? t : JSON.stringify(t, null, 2) }] };
@@ -34,22 +36,9 @@ async function safe(fn) {
 }
 
 // Resolve whether an owner is a user or an organization, so GraphQL queries pick
-// the correct root field. GitHub's /users/{login} endpoint answers for both and
-// returns type "User" | "Organization". Cached per process.
-const _ownerRootCache = new Map();
-function ownerRoot(owner) {
-  if (_ownerRootCache.has(owner)) return _ownerRootCache.get(owner);
-  let root = 'user';
-  try {
-    const r = gh('api', `users/${owner}`, '--jq', '.type');
-    if (r.stdout.trim() === 'Organization') root = 'organization';
-  } catch { /* default to user on any lookup failure */ }
-  _ownerRootCache.set(owner, root);
-  return root;
-}
-
-// Escape a string for safe inline insertion into a GraphQL query literal.
-function gqlStr(s) { return String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"'); }
+// the correct root field (cached per process). gqlStr / makeOwnerRoot are the
+// pure, unit-tested helpers extracted into lib/helpers.mjs.
+const ownerRoot = makeOwnerRoot(gh);
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -149,7 +138,7 @@ server.tool(
     confirm: z.boolean().describe('Must be true to proceed — cannot be undone'),
   },
   async ({ owner, number, confirm }) => safe(() => {
-    if (!confirm) throw new Error('Refusing to delete project without confirm:true.');
+    assertConfirmed(confirm, 'delete project');
     gh('project', 'delete', String(number), '--owner', owner);
     return text(`Deleted project #${number}.`);
   }),
@@ -278,10 +267,7 @@ server.tool(
     if (!node) throw new Error('fieldId did not resolve to a ProjectV2SingleSelectField.');
     const currentNames = (node.options ?? []).map((o) => o.name);
     const desiredNames = options.map((o) => o.name);
-    const removed = currentNames.filter((n) => !desiredNames.includes(n));
-    if (removed.length && !allowRemove) {
-      throw new Error(`This would DELETE options not in your list: ${removed.join(', ')}. Include them, or pass allowRemove:true to confirm deletion.`);
-    }
+    guardOptionRemoval(currentNames, desiredNames, allowRemove);
     const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
     const optsLiteral = options.map((o) =>
       `{name: "${esc(o.name)}", color: ${o.color ?? 'GRAY'}, description: "${esc(o.description ?? '')}"}`
@@ -324,7 +310,7 @@ server.tool(
     confirm: z.boolean().describe('Must be true to proceed'),
   },
   async ({ fieldId, confirm }) => safe(() => {
-    if (!confirm) throw new Error('Refusing to delete field without confirm:true.');
+    assertConfirmed(confirm, 'delete field');
     gh('project', 'field-delete', '--id', fieldId);
     return text('Field deleted.');
   }),
@@ -475,7 +461,7 @@ server.tool(
     confirm: z.boolean().describe('Must be true to proceed'),
   },
   async ({ owner, number, itemId, confirm }) => safe(() => {
-    if (!confirm) throw new Error('Refusing to delete item without confirm:true.');
+    assertConfirmed(confirm, 'delete item');
     gh('project', 'item-delete', String(number), '--owner', owner, '--id', itemId);
     return text('Item removed from board.');
   }),
@@ -685,7 +671,7 @@ server.tool(
     confirm: z.boolean().describe('Must be true to proceed'),
   },
   async ({ statusUpdateId, confirm }) => safe(() => {
-    if (!confirm) throw new Error('Refusing to delete status update without confirm:true.');
+    assertConfirmed(confirm, 'delete status update');
     const q = `mutation($id:ID!){deleteProjectV2StatusUpdate(input:{statusUpdateId:$id}){clientMutationId}}`;
     gql(q, '-f', `id=${statusUpdateId}`);
     return text('Status update deleted.');
@@ -693,6 +679,7 @@ server.tool(
 );
 
 registerViewTools(server);
+registerPrTools(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
