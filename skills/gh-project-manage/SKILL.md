@@ -1,7 +1,7 @@
 ---
 name: gh-project-manage
 description: Manage GitHub Projects v2 through gh-projects-mcp across Claude, Codex, and other MCP clients. Use for project boards, fields, items, views, issues, PRs, sub-issues, status updates, audits, prioritization, and github.com users/orgs project URLs.
-version: 1.4.0
+version: 1.5.0
 ---
 
 # GitHub Projects Manager
@@ -34,12 +34,12 @@ The skill is generic. Never hardcode an owner, project number, project ID, field
 | Mark/unmark template | `gh_project_mark_template` |
 | Delete project | `gh_project_delete` — confirm-gated |
 | Create/list/delete fields | `gh_project_field_create`, `gh_project_field_list`, `gh_project_field_delete` |
-| Change single-select options | `gh_project_field_option_update` — send the complete desired option set and respect removal guard |
+| Change single/multi-select options | `gh_project_field_option_update` — send the complete desired option set; preserve IDs and respect the removal guard |
 | Configure iterations | `gh_project_iteration_configure` |
 | List/add/create items | `gh_project_item_list`, `gh_project_item_add`, `gh_project_item_create` |
 | Edit draft issue | `gh_project_draft_edit` |
 | Convert draft to repo issue | `gh_project_draft_convert` |
-| Edit/clear item field | `gh_project_item_edit` |
+| Edit/clear item field | `gh_project_item_edit` — MULTI_SELECT uses option-ID arrays |
 | Archive/unarchive item | `gh_project_item_archive` |
 | Remove item from board | `gh_project_item_delete` — confirm-gated |
 | Reorder item | `gh_project_item_move` |
@@ -78,9 +78,9 @@ For EMBLEM-NLP Project #1 specifically, issue #28 in this repository is the dogf
 
 - Project IDs, item IDs, field IDs, option IDs, and iteration IDs are opaque GitHub node IDs. Resolve them fresh.
 - Built-in Projects fields cannot be recreated as custom fields. Call `gh_project_field_list` first.
-- `gh_project_item_edit` needs the project node ID, item ID, and field ID. Single-select/iteration values use option/iteration IDs, not display labels.
+- `gh_project_item_edit` needs the project node ID, item ID, and field ID. Single-select/iteration values use option/iteration IDs; MULTI_SELECT uses an array of option IDs, never display labels.
 - Sub-issue tools need issue GraphQL node IDs; obtain them from `gh_issue_list`.
-- `gh_project_field_option_update` replaces the option collection. Preserve existing option identities when the tool/schema supports it and never remove options accidentally.
+- `gh_project_field_option_update` replaces the option collection but now preserves existing option IDs automatically for unchanged names and unambiguous renames. Supply explicit IDs for ambiguous renames; removing options requires `allowRemove:true` and reports removed IDs/names.
 
 ## Views and browser capability
 

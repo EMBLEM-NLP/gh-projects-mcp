@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "server": "gh-projects-mcp",
-  "serverVersion": "1.4.0",
+  "serverVersion": "1.5.0",
   "toolCount": 40,
   "tools": [
     {
@@ -515,7 +515,7 @@
         "github"
       ],
       "confirmationRequired": false,
-      "description": "Create a custom field on a project. NOTE: Projects v2 ships reserved built-in fields (Status, Title, Assignees, Labels, Milestone, Repository, ...) — creating a field with one of those exact names throws a GraphQL error. Call gh_project_field_list first and reuse the existing field ID instead of creating a duplicate.",
+      "description": "Create a custom Project field. TEXT/NUMBER/DATE/SINGLE_SELECT/MULTI_SELECT/ITERATION are supported through GraphQL; select fields require options and iteration fields require iterationConfiguration.",
       "destructive": false,
       "inputSchema": {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -528,9 +528,58 @@
               "NUMBER",
               "DATE",
               "SINGLE_SELECT",
+              "MULTI_SELECT",
               "ITERATION"
             ],
             "type": "string"
+          },
+          "iterationConfiguration": {
+            "additionalProperties": false,
+            "description": "Required when dataType is ITERATION",
+            "properties": {
+              "duration": {
+                "description": "Default iteration cadence in days",
+                "exclusiveMinimum": 0,
+                "type": "integer"
+              },
+              "iterations": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "duration": {
+                      "description": "Length in days",
+                      "exclusiveMinimum": 0,
+                      "type": "integer"
+                    },
+                    "startDate": {
+                      "description": "ISO date YYYY-MM-DD",
+                      "type": "string"
+                    },
+                    "title": {
+                      "description": "Iteration title; defaults to Iteration N",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "startDate",
+                    "duration"
+                  ],
+                  "type": "object"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "startDate": {
+                "description": "Start date of the first iteration, YYYY-MM-DD",
+                "type": "string"
+              }
+            },
+            "required": [
+              "startDate",
+              "duration",
+              "iterations"
+            ],
+            "type": "object"
           },
           "name": {
             "description": "Field name",
@@ -541,7 +590,7 @@
             "type": "number"
           },
           "options": {
-            "description": "Option labels — required when dataType is SINGLE_SELECT",
+            "description": "Option labels — required for SINGLE_SELECT and MULTI_SELECT",
             "items": {
               "type": "string"
             },
@@ -623,27 +672,27 @@
         "github"
       ],
       "confirmationRequired": false,
-      "description": "Update the options of an existing SINGLE_SELECT field (add / rename / recolor). WARNING: the underlying updateProjectV2Field mutation REPLACES the entire option set — options you omit are deleted (along with their item assignments). This tool guards against that: it fetches the current options and, unless allowRemove=true, errors if your list drops any existing option name. Pass the FULL desired option set.",
+      "description": "Safely replace SINGLE_SELECT or MULTI_SELECT options while preserving existing option IDs. Pass the COMPLETE desired option set. Existing IDs are preserved by explicit id, unchanged name, or a single unambiguous rename; ambiguous renames fail closed. Removing options requires allowRemove:true and reports removed IDs/names.",
       "destructive": false,
       "inputSchema": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
           "allowRemove": {
-            "description": "Permit dropping existing options (deletes them + their assignments). Default false.",
+            "description": "Permit dropping existing options and their item assignments. Default false.",
             "type": "boolean"
           },
           "fieldId": {
-            "description": "SINGLE_SELECT field node ID (from gh_project_field_list)",
+            "description": "SINGLE_SELECT or MULTI_SELECT field node ID",
             "type": "string"
           },
           "options": {
-            "description": "The COMPLETE desired option list (include existing options you want to keep)",
+            "description": "The COMPLETE desired option list",
             "items": {
               "additionalProperties": false,
               "properties": {
                 "color": {
-                  "description": "Default GRAY",
+                  "description": "Omit to preserve existing color; new options default GRAY",
                   "enum": [
                     "GRAY",
                     "BLUE",
@@ -657,6 +706,11 @@
                   "type": "string"
                 },
                 "description": {
+                  "description": "Omit to preserve existing description; new options default empty",
+                  "type": "string"
+                },
+                "id": {
+                  "description": "Existing option ID. Supply this for renamed options when more than one rename/addition is ambiguous.",
                   "type": "string"
                 },
                 "name": {
@@ -830,7 +884,7 @@
         "github"
       ],
       "confirmationRequired": false,
-      "description": "Set (or clear) one field value on a project item. Get projectId from gh_project_view/gh_project_create, itemId from gh_project_item_list/gh_project_item_add, and fieldId/optionId from gh_project_field_list.",
+      "description": "Set or clear one Project item field value. MULTI_SELECT uses values[] of option IDs; other select/iteration values use value with the current option/iteration ID.",
       "destructive": false,
       "inputSchema": {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -853,8 +907,15 @@
             "type": "string"
           },
           "value": {
-            "description": "The value to set: raw text, a number as string, an ISO date (YYYY-MM-DD), a single-select option ID, or an iteration ID. Omit (with clear=true) to clear the field.",
+            "description": "Value for text/number/date/single_select/iteration. Omit with clear=true.",
             "type": "string"
+          },
+          "values": {
+            "description": "MULTI_SELECT option IDs. Use clear=true to clear the field.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "valueType": {
             "description": "Which kind of value this field holds",
@@ -863,6 +924,7 @@
               "number",
               "date",
               "single_select",
+              "multi_select",
               "iteration"
             ],
             "type": "string"
@@ -951,30 +1013,36 @@
         "github"
       ],
       "confirmationRequired": false,
-      "description": "Configure an ITERATION (sprint) field: set its iteration cadence and iterations. Like option editing, updateProjectV2Field replaces the iteration configuration — pass the full set of iterations you want. Each iteration is defined by a startDate (YYYY-MM-DD) and a duration in days.",
+      "description": "Configure an ITERATION field using GitHub's current schema. startDate/duration default from the first requested iteration for backwards compatibility; existing titles are preserved when omitted and the mutation is round-trip verified.",
       "destructive": false,
       "inputSchema": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
+          "duration": {
+            "description": "Top-level cadence in days; defaults to iterations[0].duration",
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
           "fieldId": {
-            "description": "ITERATION field node ID (from gh_project_field_list)",
+            "description": "ITERATION field node ID",
             "type": "string"
           },
           "iterations": {
-            "description": "The iterations to configure",
             "items": {
               "additionalProperties": false,
               "properties": {
                 "duration": {
                   "description": "Length in days",
-                  "type": "number"
+                  "exclusiveMinimum": 0,
+                  "type": "integer"
                 },
                 "startDate": {
                   "description": "ISO date YYYY-MM-DD",
                   "type": "string"
                 },
                 "title": {
+                  "description": "Preserve existing title for matching startDate when omitted",
                   "type": "string"
                 }
               },
@@ -986,6 +1054,10 @@
             },
             "minItems": 1,
             "type": "array"
+          },
+          "startDate": {
+            "description": "Top-level first iteration start date; defaults to iterations[0].startDate",
+            "type": "string"
           }
         },
         "required": [

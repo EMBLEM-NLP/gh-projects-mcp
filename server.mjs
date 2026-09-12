@@ -19,9 +19,10 @@ import { join } from 'node:path';
 import { gh, gql } from './lib/gql.mjs';
 import { registerViewTools } from './lib/tools-views.mjs';
 import { registerPrTools } from './lib/tools-pr.mjs';
-import { gqlStr, makeOwnerRoot, assertConfirmed, guardOptionRemoval } from './lib/helpers.mjs';
+import { gqlStr, makeOwnerRoot, assertConfirmed } from './lib/helpers.mjs';
+import { createProjectField, updateSelectFieldOptions, configureIterationField, updateMultiSelectItemField } from './lib/field-mutations.mjs';
 
-const server = new McpServer({ name: 'gh-projects-mcp', version: '1.4.0' });
+const server = new McpServer({ name: 'gh-projects-mcp', version: '1.5.0' });
 
 function text(t) {
   return { content: [{ type: 'text', text: typeof t === 'string' ? t : JSON.stringify(t, null, 2) }] };
@@ -229,76 +230,61 @@ server.tool(
 
 server.tool(
   'gh_project_field_create',
-  'Create a custom field on a project. NOTE: Projects v2 ships reserved built-in fields (Status, Title, Assignees, Labels, Milestone, Repository, ...) — creating a field with one of those exact names throws a GraphQL error. Call gh_project_field_list first and reuse the existing field ID instead of creating a duplicate.',
+  'Create a custom Project field. TEXT/NUMBER/DATE/SINGLE_SELECT/MULTI_SELECT/ITERATION are supported through GraphQL; select fields require options and iteration fields require iterationConfiguration.',
   {
     owner: z.string().describe('Project owner login'),
     number: z.number().describe('Project number'),
     name: z.string().describe('Field name'),
-    dataType: z.enum(['TEXT', 'NUMBER', 'DATE', 'SINGLE_SELECT', 'ITERATION']).describe('Field data type'),
-    options: z.array(z.string()).optional().describe('Option labels — required when dataType is SINGLE_SELECT'),
+    dataType: z.enum(['TEXT', 'NUMBER', 'DATE', 'SINGLE_SELECT', 'MULTI_SELECT', 'ITERATION']).describe('Field data type'),
+    options: z.array(z.string()).optional().describe('Option labels — required for SINGLE_SELECT and MULTI_SELECT'),
+    iterationConfiguration: z.object({
+      startDate: z.string().describe('Start date of the first iteration, YYYY-MM-DD'),
+      duration: z.number().int().positive().describe('Default iteration cadence in days'),
+      iterations: z.array(z.object({
+        startDate: z.string().describe('ISO date YYYY-MM-DD'),
+        duration: z.number().int().positive().describe('Length in days'),
+        title: z.string().optional().describe('Iteration title; defaults to Iteration N'),
+      })).min(1),
+    }).optional().describe('Required when dataType is ITERATION'),
   },
-  async ({ owner, number, name, dataType, options }) => safe(() => {
-    const args = ['project', 'field-create', String(number), '--owner', owner, '--name', name, '--data-type', dataType, '--format', 'json'];
-    if (dataType === 'SINGLE_SELECT') {
-      if (!options?.length) throw new Error('options is required when dataType is SINGLE_SELECT');
-      args.push('--single-select-options', options.join(','));
-    }
-    const r = gh(...args);
-    return text(JSON.parse(r.stdout));
+  async ({ owner, number, name, dataType, options, iterationConfiguration }) => safe(() => {
+    return text(createProjectField(gql, ownerRoot, { owner, number, name, dataType, options, iterationConfiguration }));
   }),
 );
 
 server.tool(
   'gh_project_field_option_update',
-  'Update the options of an existing SINGLE_SELECT field (add / rename / recolor). WARNING: the underlying updateProjectV2Field mutation REPLACES the entire option set — options you omit are deleted (along with their item assignments). This tool guards against that: it fetches the current options and, unless allowRemove=true, errors if your list drops any existing option name. Pass the FULL desired option set.',
+  'Safely replace SINGLE_SELECT or MULTI_SELECT options while preserving existing option IDs. Pass the COMPLETE desired option set. Existing IDs are preserved by explicit id, unchanged name, or a single unambiguous rename; ambiguous renames fail closed. Removing options requires allowRemove:true and reports removed IDs/names.',
   {
-    fieldId: z.string().describe('SINGLE_SELECT field node ID (from gh_project_field_list)'),
+    fieldId: z.string().describe('SINGLE_SELECT or MULTI_SELECT field node ID'),
     options: z.array(z.object({
+      id: z.string().optional().describe('Existing option ID. Supply this for renamed options when more than one rename/addition is ambiguous.'),
       name: z.string(),
-      color: z.enum(['GRAY', 'BLUE', 'GREEN', 'YELLOW', 'ORANGE', 'RED', 'PINK', 'PURPLE']).optional().describe('Default GRAY'),
-      description: z.string().optional(),
-    })).min(1).describe('The COMPLETE desired option list (include existing options you want to keep)'),
-    allowRemove: z.boolean().optional().describe('Permit dropping existing options (deletes them + their assignments). Default false.'),
+      color: z.enum(['GRAY', 'BLUE', 'GREEN', 'YELLOW', 'ORANGE', 'RED', 'PINK', 'PURPLE']).optional().describe('Omit to preserve existing color; new options default GRAY'),
+      description: z.string().optional().describe('Omit to preserve existing description; new options default empty'),
+    })).min(1).describe('The COMPLETE desired option list'),
+    allowRemove: z.boolean().optional().describe('Permit dropping existing options and their item assignments. Default false.'),
   },
   async ({ fieldId, options, allowRemove }) => safe(() => {
-    // Fetch current option names to guard against accidental deletion.
-    const cur = gql(`{ node(id: "${gqlStr(fieldId)}") { ... on ProjectV2SingleSelectField { name options { name } } } }`);
-    const node = cur.data.node;
-    if (!node) throw new Error('fieldId did not resolve to a ProjectV2SingleSelectField.');
-    const currentNames = (node.options ?? []).map((o) => o.name);
-    const desiredNames = options.map((o) => o.name);
-    guardOptionRemoval(currentNames, desiredNames, allowRemove);
-    const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const optsLiteral = options.map((o) =>
-      `{name: "${esc(o.name)}", color: ${o.color ?? 'GRAY'}, description: "${esc(o.description ?? '')}"}`
-    ).join(', ');
-    const q = `mutation { updateProjectV2Field(input: {fieldId: "${fieldId}", singleSelectOptions: [${optsLiteral}]}) { projectV2Field { ... on ProjectV2SingleSelectField { options { id name } } } } }`;
-    const r = gql(q);
-    return text(r.data.updateProjectV2Field.projectV2Field);
+    return text(updateSelectFieldOptions(gql, fieldId, options, allowRemove));
   }),
 );
 
 server.tool(
   'gh_project_iteration_configure',
-  'Configure an ITERATION (sprint) field: set its iteration cadence and iterations. Like option editing, updateProjectV2Field replaces the iteration configuration — pass the full set of iterations you want. Each iteration is defined by a startDate (YYYY-MM-DD) and a duration in days.',
+  'Configure an ITERATION field using GitHub\'s current schema. startDate/duration default from the first requested iteration for backwards compatibility; existing titles are preserved when omitted and the mutation is round-trip verified.',
   {
-    fieldId: z.string().describe('ITERATION field node ID (from gh_project_field_list)'),
+    fieldId: z.string().describe('ITERATION field node ID'),
+    startDate: z.string().optional().describe('Top-level first iteration start date; defaults to iterations[0].startDate'),
+    duration: z.number().int().positive().optional().describe('Top-level cadence in days; defaults to iterations[0].duration'),
     iterations: z.array(z.object({
       startDate: z.string().describe('ISO date YYYY-MM-DD'),
-      duration: z.number().describe('Length in days'),
-      title: z.string().optional(),
-    })).min(1).describe('The iterations to configure'),
+      duration: z.number().int().positive().describe('Length in days'),
+      title: z.string().optional().describe('Preserve existing title for matching startDate when omitted'),
+    })).min(1),
   },
-  async ({ fieldId, iterations }) => safe(() => {
-    const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    const iterLiteral = iterations.map((it) => {
-      const parts = [`startDate: "${esc(it.startDate)}"`, `duration: ${it.duration}`];
-      if (it.title) parts.push(`title: "${esc(it.title)}"`);
-      return `{${parts.join(', ')}}`;
-    }).join(', ');
-    const q = `mutation { updateProjectV2Field(input: {fieldId: "${fieldId}", iterationConfiguration: {iterations: [${iterLiteral}]}}) { projectV2Field { ... on ProjectV2IterationField { configuration { iterations { title startDate duration } } } } } }`;
-    const r = gql(q);
-    return text(r.data.updateProjectV2Field.projectV2Field);
+  async ({ fieldId, startDate, duration, iterations }) => safe(() => {
+    return text(configureIterationField(gql, fieldId, { startDate, duration, iterations }));
   }),
 );
 
@@ -411,16 +397,21 @@ server.tool(
 
 server.tool(
   'gh_project_item_edit',
-  'Set (or clear) one field value on a project item. Get projectId from gh_project_view/gh_project_create, itemId from gh_project_item_list/gh_project_item_add, and fieldId/optionId from gh_project_field_list.',
+  'Set or clear one Project item field value. MULTI_SELECT uses values[] of option IDs; other select/iteration values use value with the current option/iteration ID.',
   {
     projectId: z.string().describe('Project node ID (e.g. "PVT_kwHODNwyZM4B...")'),
     itemId: z.string().describe('Project item node ID'),
     fieldId: z.string().describe('Field node ID'),
-    valueType: z.enum(['text', 'number', 'date', 'single_select', 'iteration']).describe('Which kind of value this field holds'),
-    value: z.string().optional().describe('The value to set: raw text, a number as string, an ISO date (YYYY-MM-DD), a single-select option ID, or an iteration ID. Omit (with clear=true) to clear the field.'),
+    valueType: z.enum(['text', 'number', 'date', 'single_select', 'multi_select', 'iteration']).describe('Which kind of value this field holds'),
+    value: z.string().optional().describe('Value for text/number/date/single_select/iteration. Omit with clear=true.'),
+    values: z.array(z.string()).optional().describe('MULTI_SELECT option IDs. Use clear=true to clear the field.'),
     clear: z.boolean().optional().describe('Clear the field instead of setting a value'),
   },
-  async ({ projectId, itemId, fieldId, valueType, value, clear }) => safe(() => {
+  async ({ projectId, itemId, fieldId, valueType, value, values, clear }) => safe(() => {
+    if (valueType === 'multi_select') {
+      return text(updateMultiSelectItemField(gql, { projectId, itemId, fieldId, optionIds: values ?? [], clear: Boolean(clear) }));
+    }
+    if (values !== undefined) throw new Error('values is only valid when valueType is multi_select.');
     const args = ['project', 'item-edit', '--id', itemId, '--project-id', projectId, '--field-id', fieldId];
     if (clear) {
       args.push('--clear');
