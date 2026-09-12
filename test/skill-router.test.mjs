@@ -15,7 +15,7 @@ function skillReferencedTools() {
 // Every tool actually registered, parsed from the first string arg of each
 // server.tool(...) call across the server and its tool modules.
 function registeredTools() {
-  const files = ['server.mjs', 'lib/tools-views-graphql.mjs', 'lib/tools-pr.mjs'];
+  const files = ['server.mjs', 'lib/tools-views-graphql.mjs', 'lib/tools-pr.mjs', 'lib/tools-issue-lifecycle.mjs'];
   const names = new Set();
   for (const f of files) {
     const src = readFileSync(join(repoRoot, f), 'utf8');
