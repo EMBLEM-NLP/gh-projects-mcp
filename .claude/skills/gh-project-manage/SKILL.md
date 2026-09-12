@@ -1,7 +1,7 @@
 ---
 name: gh-project-manage
 description: Compatibility entry point for the canonical cross-client GitHub Projects skill.
-version: 1.7.0
+version: 1.8.0
 ---
 
 # GitHub Projects Manager — Claude compatibility shim

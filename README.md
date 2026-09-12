@@ -1,6 +1,6 @@
 # gh-projects-mcp
 
-**Version 1.7.0**
+**Version 1.8.0**
 
 MCP server for managing [GitHub Projects v2](https://docs.github.com/en/issues/planning-and-tracking-with-projects) —
 fields, items, views, sub-issues, and status updates — from any repo, chat, or editor that speaks MCP
@@ -52,6 +52,7 @@ view mutation input exposes name/layout/filter/ordered visible fields but not gr
 | `gh_project_view_create` | Declaratively create/reconcile views (GraphQL; optional groupBy UI fallback) |
 | `gh_project_view_edit` | Edit one view (GraphQL; optional groupBy UI fallback) |
 | `gh_project_view_delete` | Delete a view via GraphQL (confirm-gated) |
+| `gh_project_workflow_autoadd_configure` | Configure UI-only Auto-add workflow; omitted filter explicitly clears the saved filter and repo+filter are re-verified |
 | `gh_issue_create` | Create an issue |
 | `gh_issue_list` | List issues (includes GraphQL node `id`) |
 | `gh_issue_edit` | Edit issue title/body/labels or reopen/close; close is confirm-gated |
@@ -72,7 +73,7 @@ view mutation input exposes name/layout/filter/ordered visible fields but not gr
 
 - Node.js 18+
 - GitHub authentication through either direct API mode (`GH_PROJECTS_TOKEN` / `GITHUB_TOKEN`) or the local [`gh` CLI](https://cli.github.com/) backend with project scope
-- Microsoft Edge signed into github.com only when using an explicitly browser-backed capability such as view `groupBy` or UI-only Insights tooling
+- Microsoft Edge signed into github.com only when using an explicitly browser-backed capability such as view `groupBy`, `gh_project_workflow_autoadd_configure`, or UI-only Insights tooling
 
 ## Install
 
@@ -114,7 +115,7 @@ cp .claude/agents/gh-project-manager.md ~/.claude/agents/
 
 ## Not yet covered
 
-Two broad GitHub Projects areas still need additional tooling: **Insights chart authoring** remains UI-driven, and project **workflow authoring** (auto-add/auto-archive) remains UI-only apart from `deleteProjectV2Workflow`. View CRUD itself is API-backed; optional view `groupBy` still uses the isolated browser fallback. Iteration/sprint config and date-setting are API-backed and covered.
+Two broad GitHub Projects areas still need additional tooling: **Insights chart authoring** remains UI-driven, and project **workflow authoring beyond the covered Auto-add workflow** (for example auto-archive and other workflow types) remains UI-only apart from `deleteProjectV2Workflow`. `gh_project_workflow_autoadd_configure` covers Auto-add through the browser and verifies both repository and filter after save. View CRUD itself is API-backed; optional view `groupBy` still uses the isolated browser fallback. Iteration/sprint config and date-setting are API-backed and covered.
 
 ## License
 

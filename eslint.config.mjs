@@ -18,9 +18,9 @@ export default [
     },
   },
   {
-    // tools-views.mjs runs callbacks inside page.evaluate() in the browser
-    // context, where `document`/`window` are the page's globals.
-    files: ['lib/tools-views.mjs'],
+    // These files run callbacks inside page.evaluate() in the browser context,
+    // where document/window are the page's globals.
+    files: ['lib/tools-views.mjs', 'lib/tools-workflows.mjs'],
     languageOptions: { globals: { ...globals.browser } },
   },
 ];

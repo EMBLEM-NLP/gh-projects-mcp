@@ -1,7 +1,7 @@
 ---
 name: gh-project-manage
 description: Manage GitHub Projects v2 through gh-projects-mcp across Claude, Codex, and other MCP clients. Use for project boards, fields, items, views, issues, PRs, sub-issues, status updates, audits, prioritization, and github.com users/orgs project URLs.
-version: 1.7.0
+version: 1.8.0
 ---
 
 # GitHub Projects Manager
@@ -44,6 +44,7 @@ The skill is generic. Never hardcode an owner, project number, project ID, field
 | Remove item from board | `gh_project_item_delete` — confirm-gated |
 | Reorder item | `gh_project_item_move` |
 | List/create/edit/delete project views | `gh_project_views_list`, `gh_project_view_create`, `gh_project_view_edit`, `gh_project_view_delete` |
+| Configure auto-add workflow | `gh_project_workflow_autoadd_configure` — browser-only; omitting `filter` clears any existing filter |
 | Create/list/edit/close repo issues | `gh_issue_create`, `gh_issue_list`, `gh_issue_edit`, `gh_issue_close` — close is confirm-gated |
 | Ensure repo label | `gh_label_ensure` |
 | Open/list/merge PRs | `gh_pr_create`, `gh_pr_list`, `gh_pr_merge` — merge confirm-gated |
@@ -92,6 +93,7 @@ Ordinary Project view CRUD is API-backed: create, rename, layout, filter, ordere
 - The optional `groupBy` input is currently the only view setting that falls back to the existing logged-in Edge/CDP capability because GitHub's GraphQL view mutation input does not expose group-by fields.
 - A request that does not contain `groupBy` must never require or launch Edge.
 - If `groupBy` is requested and the browser capability is unavailable, report that limitation; do not silently drop the requested grouping.
+- `gh_project_workflow_autoadd_configure` is explicitly `browser-ui` only. It always writes the desired filter state: omitting `filter` clears an existing filter, and success requires post-save verification of both repository and filter.
 
 ## PR-first code workflow
 

@@ -31,6 +31,9 @@ function capabilityTags(name) {
   if (name === 'gh_project_view_create' || name === 'gh_project_view_edit') {
     return ['github', 'browser-ui:groupBy'];
   }
+  if (name === 'gh_project_workflow_autoadd_configure') {
+    return ['browser-ui'];
+  }
   return ['github'];
 }
 
