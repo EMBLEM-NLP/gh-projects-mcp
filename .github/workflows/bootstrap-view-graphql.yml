@@ -14,7 +14,7 @@ jobs:
         with: { node-version: 20 }
       - run: npm ci
       - name: Apply guarded source edits
-        run: python scripts/bootstrap_view_graphql.py
+        run: python scripts/run_view_graphql_bootstrap.py
       - run: npm install --package-lock-only --ignore-scripts
       - run: npm run lint
       - run: npm run contract:write
