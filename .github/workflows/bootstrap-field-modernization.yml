@@ -1,0 +1,29 @@
+name: Bootstrap field modernization
+on:
+  push:
+    branches: [feat/field-mutation-modernization]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.event.head_commit.message == 'chore: run field modernization bootstrap'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - name: Apply guarded source edits
+        run: python scripts/bootstrap_field_modernization.py
+      - run: npm run lint
+      - run: npm test
+      - run: npm run contract:write
+      - run: npm run contract:verify
+      - run: npm run package:verify
+      - name: Commit generated modernization
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add server.mjs lib/project-api-compat.mjs skills/gh-project-manage/SKILL.md package.json package-lock.json .claude-plugin/plugin.json .codex-plugin/plugin.json contracts/tools.json
+          git commit -m "feat: modernize Project field mutations"
+          git push origin HEAD:${GITHUB_REF_NAME}
