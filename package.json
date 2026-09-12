@@ -9,7 +9,10 @@
   "scripts": {
     "start": "node server.mjs",
     "test": "node scripts/run-tests.mjs",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "contract:check": "node scripts/tool-contract.mjs check",
+    "contract:write": "node scripts/tool-contract.mjs write",
+    "contract:verify": "node scripts/tool-contract.mjs verify"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
