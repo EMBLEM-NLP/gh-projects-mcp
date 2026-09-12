@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "server": "gh-projects-mcp",
-  "serverVersion": "1.5.0",
-  "toolCount": 40,
+  "serverVersion": "1.6.0",
+  "toolCount": 41,
   "tools": [
     {
       "capabilities": [
@@ -1355,6 +1355,47 @@
         "type": "object"
       },
       "name": "gh_project_views_list"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Configure the \"Auto-add to project\" built-in workflow so every issue/PR opened in a given repo (optionally filtered) is automatically added to this project. Drives GitHub's Workflows settings panel via Playwright/CDP in your existing logged-in Edge — there is no GraphQL/REST mutation for project workflows (only deleteProjectV2Workflow exists). Requires the local Edge+CDP setup described in this repo's README; cannot run from a session with no browser access.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "filter": {
+            "description": "GitHub Projects filter syntax to restrict which issues/PRs qualify. Omit for every issue and PR (no filter).",
+            "type": "string"
+          },
+          "number": {
+            "description": "Project number, e.g. 3",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login (user or org)",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repository to auto-add from, as \"owner/repo\"",
+            "type": "string"
+          },
+          "workflowName": {
+            "description": "Name of the workflow card on the Workflows page. Default \"Auto-add to project\" (GitHub's own default name).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number",
+          "repo"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_workflow_autoadd_configure"
     },
     {
       "capabilities": [

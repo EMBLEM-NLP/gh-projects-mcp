@@ -1,6 +1,6 @@
 # gh-projects-mcp
 
-**Version 1.4.0**
+**Version 1.6.0**
 
 MCP server for managing [GitHub Projects v2](https://docs.github.com/en/issues/planning-and-tracking-with-projects) —
 fields, items, views, sub-issues, and status updates — from any repo, chat, or editor that speaks MCP
@@ -54,6 +54,7 @@ existing logged-in Edge browser session (not a fresh headless browser).
 | `gh_pr_create` | Open a pull request |
 | `gh_pr_list` | List pull requests (number, state, head/base, mergeability) |
 | `gh_pr_merge` | Merge a pull request (confirm-gated) |
+| `gh_project_workflow_autoadd_configure` | Configure the "Auto-add to project" workflow for a repo, optionally filtered (Playwright — see below) |
 | `gh_label_ensure` | Idempotent label creation |
 | `gh_subissue_link` | Link a sub-issue to a parent/epic |
 | `gh_subissue_unlink` | Remove a sub-issue link |
@@ -68,8 +69,10 @@ existing logged-in Edge browser session (not a fresh headless browser).
 - [`gh` CLI](https://cli.github.com/), authenticated with the `project` scope
   (`gh auth refresh -s project`)
 - Node.js 18+
-- For view management: Microsoft Edge, signed into github.com (the Playwright automation attaches
-  to this session via Chrome DevTools Protocol rather than launching a fresh browser)
+- For view management and workflow configuration (`gh_project_workflow_autoadd_configure`):
+  Microsoft Edge, signed into github.com (the Playwright automation attaches to this session via
+  Chrome DevTools Protocol rather than launching a fresh browser). This is a local-machine
+  requirement — a cloud/remote session with no browser access cannot run these two tools.
 
 ## Install
 
@@ -112,11 +115,12 @@ cp .claude/agents/gh-project-manager.md ~/.claude/agents/
 
 ## Not yet covered
 
-Two GitHub Projects features are genuinely UI-only (no API) and remain unported: **Insights chart**
-creation/rename, and project **workflow authoring** (auto-add/auto-archive — only
-`deleteProjectV2Workflow` has an API). Both need Playwright/CDP like the view tools. (Iteration/sprint
+One GitHub Projects feature is genuinely UI-only (no API) and remains unported: **Insights chart**
+creation/rename — it needs Playwright/CDP like the view and workflow tools. (Iteration/sprint
 config and date-setting are API-backed and *are* covered — `gh_project_iteration_configure` /
-`gh_project_item_edit`.)
+`gh_project_item_edit`. Auto-add workflow configuration is also covered — see
+`gh_project_workflow_autoadd_configure` above; auto-archive and other workflow types are not yet
+wired up, but the same Playwright pattern applies.)
 
 ## License
 

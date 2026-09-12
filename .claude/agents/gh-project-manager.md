@@ -54,12 +54,13 @@ UI/API surfaces.
 
 Genuinely UI-only (no API — these still need Playwright/CDP or project-local scripts):
 - Insights chart creation/rename (no API — sidebar Configure panel + modal rename dialog)
-- Project workflow *authoring* (auto-add / auto-archive) — only `deleteProjectV2Workflow` has an API
+- Project workflow types other than auto-add (auto-archive, etc.) — only `deleteProjectV2Workflow`
+  has an API, and no tool covers these yet
 
-Now covered by `gh-projects-mcp` tools (no longer "not yet" — the earlier note mislabeled these
-as UI-only; both are API-backed):
-- Sprint/iteration field configuration → `gh_project_iteration_configure` (`updateProjectV2Field` iterationConfiguration)
+Now covered by `gh-projects-mcp` tools (no longer "not yet"):
+- Sprint/iteration field configuration → `gh_project_iteration_configure` (`updateProjectV2Field` iterationConfiguration) — API-backed
 - Historical/milestone date backfill → scripted use of `gh_project_item_edit` (updateProjectV2ItemFieldValue); date-setting is API-backed, so build it as a playbook over that tool, not as UI automation
+- Auto-add-to-project workflow configuration → `gh_project_workflow_autoadd_configure` — Playwright/CDP, same `browser-ui` capability as the view tools (still UI-only on GitHub's side, but no longer a manual/ad-hoc task)
 
 ## Known gotchas
 

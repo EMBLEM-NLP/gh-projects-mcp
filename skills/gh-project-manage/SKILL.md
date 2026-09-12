@@ -1,7 +1,7 @@
 ---
 name: gh-project-manage
-description: Manage GitHub Projects v2 through gh-projects-mcp across Claude, Codex, and other MCP clients. Use for project boards, fields, items, views, issues, PRs, sub-issues, status updates, audits, prioritization, and github.com users/orgs project URLs.
-version: 1.5.0
+description: Manage GitHub Projects v2 through gh-projects-mcp across Claude, Codex, and other MCP clients. Use for project boards, fields, items, views, workflows, issues, PRs, sub-issues, status updates, audits, prioritization, and github.com users/orgs project URLs.
+version: 1.6.0
 ---
 
 # GitHub Projects Manager
@@ -47,6 +47,7 @@ The skill is generic. Never hardcode an owner, project number, project ID, field
 | Create/list repo issues | `gh_issue_create`, `gh_issue_list` |
 | Ensure repo label | `gh_label_ensure` |
 | Open/list/merge PRs | `gh_pr_create`, `gh_pr_list`, `gh_pr_merge` — merge confirm-gated |
+| Configure auto-add workflow | `gh_project_workflow_autoadd_configure` — `browser-ui` capability, same requirement as views |
 | Link/unlink/reorder sub-issues | `gh_subissue_link`, `gh_subissue_unlink`, `gh_subissue_reprioritize` |
 | Project status updates | `gh_status_update_create`, `gh_status_update_list`, `gh_status_update_edit`, `gh_status_update_delete` |
 
@@ -82,14 +83,20 @@ For EMBLEM-NLP Project #1 specifically, issue #28 in this repository is the dogf
 - Sub-issue tools need issue GraphQL node IDs; obtain them from `gh_issue_list`.
 - `gh_project_field_option_update` replaces the option collection but now preserves existing option IDs automatically for unchanged names and unambiguous renames. Supply explicit IDs for ambiguous renames; removing options requires `allowRemove:true` and reports removed IDs/names.
 
-## Views and browser capability
+## Views, workflows, and browser capability
 
-The current MCP still exposes `gh_project_view_create` and `gh_project_view_delete` through its browser/UI implementation while issue #56 migrates ordinary view CRUD to GitHub's current GraphQL API.
+The current MCP still exposes `gh_project_view_create`, `gh_project_view_delete`, and
+`gh_project_workflow_autoadd_configure` through Playwright/CDP browser automation, because GitHub's
+API has no mutation for view layout or workflow authoring at all (only `deleteProjectV2Workflow`
+exists, and it needs a node ID with no read path to obtain one). View CRUD is additionally tracked
+for a future GraphQL migration under issue #56 if GitHub ever adds the missing mutations.
 
-- Treat those two tools as a distinct `browser-ui` capability.
-- If the runtime cannot provide the browser capability, report that limitation and continue with API-backed operations where possible.
+- Treat these three tools as a distinct `browser-ui` capability.
+- If the runtime cannot provide the browser capability (no local Edge+CDP), report that limitation
+  and continue with API-backed operations where possible.
 - Do not use browser automation for operations that already have a supported API path.
-- Once #56 lands, this skill and the committed tool contract should be updated together.
+- Once #56 lands (or GitHub ships a workflow-authoring mutation), this skill and the committed tool
+  contract should be updated together.
 
 ## PR-first code workflow
 
