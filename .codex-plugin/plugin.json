@@ -1,6 +1,6 @@
 {
   "name": "gh-projects-mcp",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Manage GitHub Projects v2, issues, pull requests, fields, items, sub-issues, views, and status updates through one MCP tool contract.",
   "author": {
     "name": "EMBLEM-NLP"

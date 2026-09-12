@@ -1,6 +1,6 @@
 # gh-projects-mcp
 
-**Version 1.6.0**
+**Version 1.7.0**
 
 MCP server for managing [GitHub Projects v2](https://docs.github.com/en/issues/planning-and-tracking-with-projects) —
 fields, items, views, sub-issues, and status updates — from any repo, chat, or editor that speaks MCP
@@ -54,6 +54,8 @@ view mutation input exposes name/layout/filter/ordered visible fields but not gr
 | `gh_project_view_delete` | Delete a view via GraphQL (confirm-gated) |
 | `gh_issue_create` | Create an issue |
 | `gh_issue_list` | List issues (includes GraphQL node `id`) |
+| `gh_issue_edit` | Edit issue title/body/labels or reopen/close; close is confirm-gated |
+| `gh_issue_close` | Close an issue with completed/not-planned reason (confirm-gated) |
 | `gh_pr_create` | Open a pull request |
 | `gh_pr_list` | List pull requests (number, state, head/base, mergeability) |
 | `gh_pr_merge` | Merge a pull request (confirm-gated) |

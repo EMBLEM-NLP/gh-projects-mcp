@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "server": "gh-projects-mcp",
-  "serverVersion": "1.6.0",
-  "toolCount": 41,
+  "serverVersion": "1.7.0",
+  "toolCount": 43,
   "tools": [
     {
       "capabilities": [
@@ -17,6 +17,53 @@
         "type": "object"
       },
       "name": "gh_auth_status"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": true,
+      "description": "Close a repository issue with a completed or not-planned reason, then re-read and verify the final state. Requires confirm:true and refuses pull-request numbers.",
+      "destructive": true,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "description": "Must be true to close the issue",
+            "type": "boolean"
+          },
+          "number": {
+            "description": "Issue number",
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "owner": {
+            "description": "Repository owner login",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Close reason; default completed",
+            "enum": [
+              "completed",
+              "not_planned"
+            ],
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repository name without owner",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "number",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "gh_issue_close"
     },
     {
       "capabilities": [
@@ -65,6 +112,82 @@
         "type": "object"
       },
       "name": "gh_issue_create"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Edit a repository issue and verify final state. Title/body/labels are non-destructive; closing through state=closed requires confirm:true. Pull-request numbers are refused.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "description": "New issue body",
+            "type": "string"
+          },
+          "closeReason": {
+            "description": "Close reason when state=closed",
+            "enum": [
+              "completed",
+              "not_planned"
+            ],
+            "type": "string"
+          },
+          "confirm": {
+            "description": "Required when state=closed",
+            "type": "boolean"
+          },
+          "labels": {
+            "description": "Labels to add without removing unrelated labels",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "number": {
+            "description": "Issue number",
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "owner": {
+            "description": "Repository owner login",
+            "type": "string"
+          },
+          "removeLabels": {
+            "description": "Labels to remove",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "repo": {
+            "description": "Repository name without owner",
+            "type": "string"
+          },
+          "state": {
+            "description": "Reopen or close the issue",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "description": "New issue title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "number"
+        ],
+        "type": "object"
+      },
+      "name": "gh_issue_edit"
     },
     {
       "capabilities": [
