@@ -1,11 +1,32 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeWorkflowAutoaddHandler } from '../lib/tools-workflows.mjs';
+import {
+  makeWorkflowAutoaddHandler,
+  setWorkflowFilter,
+  readWorkflowVerification,
+} from '../lib/tools-workflows.mjs';
 
 function fakePage() {
   return {
     async goto() {},
     async waitForTimeout() {},
+  };
+}
+
+function fakeFilterPage({ bodyText = 'EMBLEM-NLP/example', inputValue = '' } = {}) {
+  let filled;
+  const locator = {
+    or() { return this; },
+    async isVisible() { return true; },
+    async fill(value) { filled = value; },
+    async inputValue() { return inputValue; },
+  };
+  return {
+    get filled() { return filled; },
+    getByPlaceholder() { return locator; },
+    locator() { return locator; },
+    async waitForTimeout() {},
+    async evaluate() { return bodyText; },
   };
 }
 
@@ -25,6 +46,30 @@ function makeOperations(overrides = {}) {
 function pageRunner(page = fakePage()) {
   return async (_owner, _number, fn) => fn(page, 'https://github.com/orgs/EMBLEM-NLP/projects/3/workflows');
 }
+
+test('setWorkflowFilter clears the DOM input when filter is omitted', async () => {
+  const page = fakeFilterPage({ inputValue: 'old-filter' });
+  await setWorkflowFilter(page, undefined);
+  assert.equal(page.filled, '');
+});
+
+test('readWorkflowVerification requires both repository and filter to match', async () => {
+  const stale = await readWorkflowVerification(
+    fakeFilterPage({ bodyText: 'EMBLEM-NLP/example', inputValue: 'old-filter' }),
+    'EMBLEM-NLP/example',
+    'new-filter',
+  );
+  assert.equal(stale.repoVerified, true);
+  assert.equal(stale.filterVerified, false);
+  assert.equal(stale.verified, false);
+
+  const current = await readWorkflowVerification(
+    fakeFilterPage({ bodyText: 'EMBLEM-NLP/example', inputValue: 'new-filter' }),
+    'EMBLEM-NLP/example',
+    'new-filter',
+  );
+  assert.equal(current.verified, true);
+});
 
 test('omitting filter explicitly writes an empty filter to clear previous configuration', async () => {
   const seen = [];
