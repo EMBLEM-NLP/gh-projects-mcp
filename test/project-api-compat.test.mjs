@@ -100,12 +100,21 @@ test('project field-list returns paginated field configuration objects', () => {
   assert.equal(out.fields[0].id, 'F1');
 });
 
-test('iteration field creation fails closed pending #57', () => {
-  const compat = new ProjectApiCompat(backendStub());
-  assert.throws(
-    () => compat.handle(['project', 'field-create', '1', '--owner', 'o', '--name', 'Sprint', '--data-type', 'ITERATION']),
-    /#57/,
-  );
+test('iteration field creation forwards the current iteration configuration', () => {
+  const backend = backendStub([{
+    data: { createProjectV2Field: { projectV2Field: { id: 'ITER', name: 'Sprint', dataType: 'ITERATION' } } },
+  }]);
+  const compat = new ProjectApiCompat(backend);
+  const config = {
+    startDate: '2026-09-14', duration: 14,
+    iterations: [{ title: 'Sprint 1', startDate: '2026-09-14', duration: 14 }],
+  };
+  const out = JSON.parse(compat.handle([
+    'project', 'field-create', '1', '--owner', 'o', '--name', 'Sprint', '--data-type', 'ITERATION',
+    '--iteration-configuration-json', JSON.stringify(config),
+  ]).stdout);
+  assert.equal(out.id, 'ITER');
+  assert.deepEqual(backend.calls[0].variables.input.iterationConfiguration, config);
 });
 
 test('item add resolves issue URL node id before addProjectV2ItemById', () => {
