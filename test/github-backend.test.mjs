@@ -152,10 +152,10 @@ test('GitHubApiBackend gh compatibility supports ownerRoot REST lookup', () => {
   assert.equal(result.stdout, 'Organization');
 });
 
-test('GitHubApiBackend fails closed for unmigrated gh commands', () => {
+test('GitHubApiBackend fails closed for an unmigrated gh command', () => {
   const backend = new GitHubApiBackend({ token: 'secret', request: () => ({}) });
   assert.throws(
-    () => backend.gh('issue', 'list', '--repo', 'o/r'),
+    () => backend.gh('project', 'field-list', '1', '--owner', 'o'),
     /capability_unavailable/,
   );
 });
