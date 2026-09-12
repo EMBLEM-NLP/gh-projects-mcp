@@ -1,7 +1,7 @@
 ---
 name: gh-project-manage
 description: Manage GitHub Projects v2 through gh-projects-mcp across Claude, Codex, and other MCP clients. Use for project boards, fields, items, views, issues, PRs, sub-issues, status updates, audits, prioritization, and github.com users/orgs project URLs.
-version: 1.5.0
+version: 1.6.0
 ---
 
 # GitHub Projects Manager
@@ -43,7 +43,7 @@ The skill is generic. Never hardcode an owner, project number, project ID, field
 | Archive/unarchive item | `gh_project_item_archive` |
 | Remove item from board | `gh_project_item_delete` — confirm-gated |
 | Reorder item | `gh_project_item_move` |
-| List/create/delete project views | `gh_project_views_list`, `gh_project_view_create`, `gh_project_view_delete` |
+| List/create/edit/delete project views | `gh_project_views_list`, `gh_project_view_create`, `gh_project_view_edit`, `gh_project_view_delete` |
 | Create/list repo issues | `gh_issue_create`, `gh_issue_list` |
 | Ensure repo label | `gh_label_ensure` |
 | Open/list/merge PRs | `gh_pr_create`, `gh_pr_list`, `gh_pr_merge` — merge confirm-gated |
@@ -84,12 +84,14 @@ For EMBLEM-NLP Project #1 specifically, issue #28 in this repository is the dogf
 
 ## Views and browser capability
 
-The current MCP still exposes `gh_project_view_create` and `gh_project_view_delete` through its browser/UI implementation while issue #56 migrates ordinary view CRUD to GitHub's current GraphQL API.
+Ordinary Project view CRUD is API-backed: create, rename, layout, filter, ordered visible fields, and delete do not require a browser.
 
-- Treat those two tools as a distinct `browser-ui` capability.
-- If the runtime cannot provide the browser capability, report that limitation and continue with API-backed operations where possible.
-- Do not use browser automation for operations that already have a supported API path.
-- Once #56 lands, this skill and the committed tool contract should be updated together.
+- `gh_project_view_create` is declarative and GraphQL-backed for ordinary settings.
+- `gh_project_view_edit` updates one view by name through `updateProjectV2View`.
+- `gh_project_view_delete` uses `deleteProjectV2View` and remains confirm-gated.
+- The optional `groupBy` input is currently the only view setting that falls back to the existing logged-in Edge/CDP capability because GitHub's GraphQL view mutation input does not expose group-by fields.
+- A request that does not contain `groupBy` must never require or launch Edge.
+- If `groupBy` is requested and the browser capability is unavailable, report that limitation; do not silently drop the requested grouping.
 
 ## PR-first code workflow
 

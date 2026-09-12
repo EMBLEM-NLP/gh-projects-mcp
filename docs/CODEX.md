@@ -89,9 +89,9 @@ Repository CI verifies:
 
 ## Browser-only capability
 
-The current contract still marks `gh_project_view_create` and `gh_project_view_delete` as `browser-ui` while #56 migrates ordinary view CRUD to GitHub's current GraphQL API.
+Normal Project view create/edit/delete is GraphQL-backed and works in the same API/CLI runtimes as other Project operations. The contract marks `gh_project_view_create` and `gh_project_view_edit` with an optional `browser-ui:groupBy` capability because only the `groupBy` input still requires the logged-in Edge/CDP fallback. `gh_project_view_delete` is fully API-backed.
 
-Core API-backed Project/issue/PR workflows do not require that browser capability. Runtime isolation/preflight work is tracked in #64.
+Remote runtimes that do not expose a browser can still use every API-backed view setting; they should avoid requesting `groupBy` until a non-browser mutation becomes available. Runtime isolation/preflight work is tracked in #64.
 
 ## Remote/hosted Codex
 

@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "server": "gh-projects-mcp",
-  "serverVersion": "1.5.0",
-  "toolCount": 40,
+  "serverVersion": "1.6.0",
+  "toolCount": 41,
   "tools": [
     {
       "capabilities": [
@@ -1222,10 +1222,11 @@
     },
     {
       "capabilities": [
-        "browser-ui"
+        "github",
+        "browser-ui:groupBy"
       ],
       "confirmationRequired": false,
-      "description": "Create (or, with reapply=true, re-apply settings to existing) views on a GitHub Project via Playwright driving GitHub's web UI in your existing logged-in Edge browser. Required because GitHub's GraphQL API has no createProjectV2View mutation and cannot set view layout. By default this only CREATES views and REPORTS (does not delete) ghost tabs and layout-mismatched views — pass pruneGhostViews:true to allow those deletions/recreations.",
+      "description": "Declaratively create or reconcile Project views. Normal create/layout/filter/visible-field CRUD uses GitHub GraphQL. groupBy remains an explicit browser-ui fallback. Existing names are skipped unless reapply=true; pruneGhostViews deletes non-spec views (except the first/default view) and repairs layout mismatches.",
       "destructive": false,
       "inputSchema": {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1240,24 +1241,24 @@
             "type": "string"
           },
           "pruneGhostViews": {
-            "description": "Destructive: DELETE view tabs not in the spec and delete+recreate layout-mismatched views. Default false (only report them under wouldPrune).",
+            "description": "Destructive: delete non-spec views except the first/default view; also repair layout mismatches",
             "type": "boolean"
           },
           "reapply": {
-            "description": "Re-apply filter/groupBy to views that already exist instead of skipping them",
+            "description": "Re-apply API-backed settings to matching existing views",
             "type": "boolean"
           },
           "views": {
-            "description": "Declarative view spec — existing views with matching names are skipped unless reapply=true",
+            "description": "Declarative view specification",
             "items": {
               "additionalProperties": false,
               "properties": {
                 "filter": {
-                  "description": "GitHub Projects filter syntax, e.g. \"status:Backlog\" or \"-status:Done -status:Backlog\"",
+                  "description": "GitHub Projects filter syntax",
                   "type": "string"
                 },
                 "groupBy": {
-                  "description": "Field name to group board columns by, e.g. \"Status\" or \"Owner\"",
+                  "description": "UI-only fallback: field name used for grouping, e.g. Status",
                   "type": "string"
                 },
                 "layout": {
@@ -1271,6 +1272,13 @@
                 },
                 "name": {
                   "type": "string"
+                },
+                "visibleFieldIds": {
+                  "description": "Ordered Project field node IDs to show in table/board layout",
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
                 }
               },
               "required": [
@@ -1278,6 +1286,7 @@
               ],
               "type": "object"
             },
+            "minItems": 1,
             "type": "array"
           }
         },
@@ -1292,17 +1301,17 @@
     },
     {
       "capabilities": [
-        "browser-ui"
+        "github"
       ],
       "confirmationRequired": true,
-      "description": "Delete one view (tab) from a GitHub Project via Playwright driving the web UI. Destructive — requires confirm:true.",
+      "description": "Delete one Project view by name through deleteProjectV2View and verify it is absent. Destructive — requires confirm:true. No browser is used.",
       "destructive": true,
       "inputSchema": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
           "confirm": {
-            "description": "Must be true to proceed — deleting a view cannot be undone",
+            "description": "Must be true to proceed",
             "type": "boolean"
           },
           "number": {
@@ -1314,7 +1323,7 @@
             "type": "string"
           },
           "viewName": {
-            "description": "Exact name of the view to delete",
+            "description": "Exact view name to delete",
             "type": "string"
           }
         },
@@ -1330,10 +1339,71 @@
     },
     {
       "capabilities": [
+        "github",
+        "browser-ui:groupBy"
+      ],
+      "confirmationRequired": false,
+      "description": "Edit one Project view by name. name/layout/filter/visibleFieldIds are GraphQL-backed. groupBy is the only browser-ui fallback.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "filter": {
+            "description": "New filter; use empty string to clear",
+            "type": "string"
+          },
+          "groupBy": {
+            "description": "UI-only fallback: Group by field name",
+            "type": "string"
+          },
+          "layout": {
+            "enum": [
+              "table",
+              "board",
+              "roadmap"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "description": "New view name",
+            "type": "string"
+          },
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          },
+          "viewName": {
+            "description": "Current exact view name",
+            "type": "string"
+          },
+          "visibleFieldIds": {
+            "description": "Ordered visible Project field node IDs",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "owner",
+          "number",
+          "viewName"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_view_edit"
+    },
+    {
+      "capabilities": [
         "github"
       ],
       "confirmationRequired": false,
-      "description": "List a project's views (name, number, layout, createdAt) via GraphQL. Read-only — GitHub's API has no mutation for creating or changing view layout; use gh_project_view_create for that.",
+      "description": "List a project's views with stable node IDs, layout, filter, ordered visible fields, and current group-by configuration.",
       "destructive": false,
       "inputSchema": {
         "$schema": "http://json-schema.org/draft-07/schema#",

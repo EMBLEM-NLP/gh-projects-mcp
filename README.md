@@ -1,6 +1,6 @@
 # gh-projects-mcp
 
-**Version 1.4.0**
+**Version 1.6.0**
 
 MCP server for managing [GitHub Projects v2](https://docs.github.com/en/issues/planning-and-tracking-with-projects) —
 fields, items, views, sub-issues, and status updates — from any repo, chat, or editor that speaks MCP
@@ -12,11 +12,13 @@ into every repo.
 
 ## Why this exists
 
-GitHub's public GraphQL API has a real gap: there is no `createProjectV2View` mutation, and view
-*layout* (table/board/roadmap) cannot be set through the API at all — it's web-UI only. Most of this
-server is a thin wrapper over `gh` CLI / GraphQL, but view management (`gh_project_view_create`,
-`gh_project_view_delete`) drives the actual GitHub web UI via Playwright, CDP-attached to your
-existing logged-in Edge browser session (not a fresh headless browser).
+GitHub Projects has a broad GraphQL/REST API, but client/runtime ergonomics still vary. This server
+provides one stable MCP contract over local `gh` CLI auth or direct GitHub API auth and preserves
+confirmation gates and ID-resolution rules across Claude, Codex, and future remote clients.
+
+Project view create/update/delete are now GraphQL-backed. The only view setting that still requires
+the existing logged-in Edge/CDP fallback is optional `groupBy`, because GitHub's current GraphQL
+view mutation input exposes name/layout/filter/ordered visible fields but not group-by fields.
 
 ## Tools
 
@@ -33,8 +35,8 @@ existing logged-in Edge browser session (not a fresh headless browser).
 | `gh_project_mark_template` | Mark/unmark an org project as a template |
 | `gh_project_link` | Link a project to a repo |
 | `gh_project_field_list` | List fields + option IDs |
-| `gh_project_field_create` | Create a custom field |
-| `gh_project_field_option_update` | Add/rename/recolor SINGLE_SELECT options (delete-guarded) |
+| `gh_project_field_create` | Create TEXT/NUMBER/DATE/SINGLE_SELECT/MULTI_SELECT/ITERATION fields |
+| `gh_project_field_option_update` | Safely update SINGLE_SELECT/MULTI_SELECT options with ID preservation |
 | `gh_project_iteration_configure` | Configure an ITERATION (sprint) field's iterations |
 | `gh_project_field_delete` | Delete a custom field (confirm-gated) |
 | `gh_project_item_list` | List items on a board |
@@ -46,9 +48,10 @@ existing logged-in Edge browser session (not a fresh headless browser).
 | `gh_project_item_archive` | Archive/unarchive an item |
 | `gh_project_item_delete` | Remove an item from the board (confirm-gated) |
 | `gh_project_item_move` | Reorder an item's board position |
-| `gh_project_views_list` | List views (read-only, GraphQL) |
-| `gh_project_view_create` | Create/repair views (Playwright — see above) |
-| `gh_project_view_delete` | Delete a view (Playwright) |
+| `gh_project_views_list` | List views with IDs/filter/layout/visible/grouping configuration |
+| `gh_project_view_create` | Declaratively create/reconcile views (GraphQL; optional groupBy UI fallback) |
+| `gh_project_view_edit` | Edit one view (GraphQL; optional groupBy UI fallback) |
+| `gh_project_view_delete` | Delete a view via GraphQL (confirm-gated) |
 | `gh_issue_create` | Create an issue |
 | `gh_issue_list` | List issues (includes GraphQL node `id`) |
 | `gh_pr_create` | Open a pull request |
@@ -65,11 +68,9 @@ existing logged-in Edge browser session (not a fresh headless browser).
 
 ## Requirements
 
-- [`gh` CLI](https://cli.github.com/), authenticated with the `project` scope
-  (`gh auth refresh -s project`)
 - Node.js 18+
-- For view management: Microsoft Edge, signed into github.com (the Playwright automation attaches
-  to this session via Chrome DevTools Protocol rather than launching a fresh browser)
+- GitHub authentication through either direct API mode (`GH_PROJECTS_TOKEN` / `GITHUB_TOKEN`) or the local [`gh` CLI](https://cli.github.com/) backend with project scope
+- Microsoft Edge signed into github.com only when using an explicitly browser-backed capability such as view `groupBy` or UI-only Insights tooling
 
 ## Install
 
@@ -93,8 +94,7 @@ claude mcp add --scope user gh-projects -- node /path/to/gh-projects-mcp/server.
 
 This repo also ships the judgment layer that sits on top of the MCP tools:
 
-- `.claude/skills/gh-project-manage/SKILL.md` — front-door skill; routes simple asks to a single
-  tool call, delegates multi-step work to the subagent below.
+- `skills/gh-project-manage/SKILL.md` — canonical Claude/Codex front-door skill; the `.claude/skills/...` path is a compatibility shim.
 - `.claude/agents/gh-project-manager.md` — execution subagent for delegated work (health audits,
   bulk triage, sub-issue restructuring), with a generic 7-point health-audit template and citation
   contract.
@@ -112,11 +112,7 @@ cp .claude/agents/gh-project-manager.md ~/.claude/agents/
 
 ## Not yet covered
 
-Two GitHub Projects features are genuinely UI-only (no API) and remain unported: **Insights chart**
-creation/rename, and project **workflow authoring** (auto-add/auto-archive — only
-`deleteProjectV2Workflow` has an API). Both need Playwright/CDP like the view tools. (Iteration/sprint
-config and date-setting are API-backed and *are* covered — `gh_project_iteration_configure` /
-`gh_project_item_edit`.)
+Two broad GitHub Projects areas still need additional tooling: **Insights chart authoring** remains UI-driven, and project **workflow authoring** (auto-add/auto-archive) remains UI-only apart from `deleteProjectV2Workflow`. View CRUD itself is API-backed; optional view `groupBy` still uses the isolated browser fallback. Iteration/sprint config and date-setting are API-backed and covered.
 
 ## License
 
