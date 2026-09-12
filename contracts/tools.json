@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "server": "gh-projects-mcp",
-  "serverVersion": "1.7.0",
-  "toolCount": 43,
+  "serverVersion": "1.8.0",
+  "toolCount": 44,
   "tools": [
     {
       "capabilities": [
@@ -1548,6 +1548,48 @@
         "type": "object"
       },
       "name": "gh_project_views_list"
+    },
+    {
+      "capabilities": [
+        "browser-ui"
+      ],
+      "confirmationRequired": false,
+      "description": "Configure GitHub Projects \"Auto-add to project\" through the browser-only Workflows UI. Omit filter to explicitly clear any existing filter and include every issue/PR. Requires local logged-in Edge/CDP and verifies both repository and filter after save.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "filter": {
+            "description": "GitHub Projects filter syntax. Omit to clear any existing filter.",
+            "type": "string"
+          },
+          "number": {
+            "description": "Project number",
+            "exclusiveMinimum": 0,
+            "type": "integer"
+          },
+          "owner": {
+            "description": "Project owner login (user or organization)",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repository to auto-add from, as owner/repo",
+            "type": "string"
+          },
+          "workflowName": {
+            "description": "Workflow card name; defaults to Auto-add to project",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number",
+          "repo"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_workflow_autoadd_configure"
     },
     {
       "capabilities": [

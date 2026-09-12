@@ -37,13 +37,13 @@ project number.
 2. **`gh` CLI directly** (`gh issue view`, `gh pr list`, etc.) — for read-only lookups that don't
    have a wrapping tool yet.
 3. **`gh api graphql` directly** — for mutations/queries not yet covered by `gh-projects-mcp`
-   (Insights charts, workflow authoring — see "Not yet in the MCP" below). On Windows, always build these via `spawnSync`
+   (Insights charts and workflow authoring beyond the covered Auto-add tool — see "Not yet in the MCP" below). On Windows, always build these via `spawnSync`
    with a `-f query=...` argument array, never `execSync` with an interpolated string — shell
    argument splitting breaks multi-word GraphQL queries.
 4. **Playwright, ad hoc** — should rarely be needed. Normal view CRUD is GraphQL-backed through
    `gh_project_view_create` / `gh_project_view_edit` / `gh_project_view_delete`; only optional `groupBy`
    uses the MCP's isolated Edge/CDP fallback. Reach for raw Playwright only for genuinely UI-only
-   features the MCP does not cover (for example Insights authoring).
+   features the MCP does not cover (for example Insights authoring or workflow types other than the covered Auto-add tool).
 
 ## Not yet in the MCP
 
@@ -55,10 +55,12 @@ UI/API surfaces.
 
 Genuinely UI-only (no API — these still need Playwright/CDP or project-local scripts):
 - Insights chart creation/rename (no API — sidebar Configure panel + modal rename dialog)
-- Project workflow *authoring* (auto-add / auto-archive) — only `deleteProjectV2Workflow` has an API
+- Project workflow authoring beyond Auto-add (for example auto-archive) — only `deleteProjectV2Workflow` has an API; Auto-add is covered by `gh_project_workflow_autoadd_configure`
 
-Now covered by `gh-projects-mcp` tools (no longer "not yet" — the earlier note mislabeled these
-as UI-only; both are API-backed):
+Now covered by `gh-projects-mcp` tools (no longer "not yet"):
+- Auto-add workflow configuration → `gh_project_workflow_autoadd_configure` (browser-only; omission clears any existing filter and repo+filter are both verified)
+
+The following earlier items were also mislabeled as UI-only; both are API-backed:
 - Sprint/iteration field configuration → `gh_project_iteration_configure` (`updateProjectV2Field` iterationConfiguration)
 - Historical/milestone date backfill → scripted use of `gh_project_item_edit` (updateProjectV2ItemFieldValue); date-setting is API-backed, so build it as a playbook over that tool, not as UI automation
 
