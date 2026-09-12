@@ -1,0 +1,30 @@
+name: Bootstrap GraphQL view migration
+on:
+  push:
+    branches: [feat/graphql-project-views]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: "github.event.head_commit.message == 'chore: run GraphQL view migration bootstrap'"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci
+      - name: Apply guarded source edits
+        run: python scripts/bootstrap_view_graphql.py
+      - run: npm install --package-lock-only --ignore-scripts
+      - run: npm run lint
+      - run: npm run contract:write
+      - run: npm test
+      - run: npm run contract:verify
+      - run: npm run package:verify
+      - name: Commit GraphQL view migration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add server.mjs lib/view-api.mjs lib/cdp.mjs README.md docs/CODEX.md skills/gh-project-manage/SKILL.md .claude/skills/gh-project-manage/SKILL.md .claude/agents/gh-project-manager.md scripts/tool-contract.mjs test/skill-router.test.mjs package.json package-lock.json .claude-plugin/plugin.json .codex-plugin/plugin.json contracts/tools.json
+          git commit -m "feat: migrate Project view CRUD to GraphQL"
+          git push origin HEAD:${GITHUB_REF_NAME}
