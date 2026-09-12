@@ -1,0 +1,1510 @@
+{
+  "schemaVersion": 1,
+  "server": "gh-projects-mcp",
+  "serverVersion": "1.4.0",
+  "toolCount": 40,
+  "tools": [
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Check the authenticated gh CLI account and whether it has the 'project' scope required for all other tools in this server.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "properties": {},
+        "type": "object"
+      },
+      "name": "gh_auth_status"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Create an issue in a repo. Body is written via a temp file to avoid shell-escaping issues with newlines/quotes.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "description": "Issue body (markdown)",
+            "type": "string"
+          },
+          "labels": {
+            "description": "Labels to apply (must already exist — use gh_label_ensure first)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "milestone": {
+            "description": "Milestone title (not number) to assign",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Repo owner login",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repo name (without owner)",
+            "type": "string"
+          },
+          "title": {
+            "description": "Issue title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "gh_issue_create"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "List issues in a repo, including each issue's GraphQL node id (needed by gh_subissue_link).",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "description": "Max issues to return (default 200)",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Repo owner login",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repo name (without owner)",
+            "type": "string"
+          },
+          "state": {
+            "description": "Filter by state (default: open)",
+            "enum": [
+              "open",
+              "closed",
+              "all"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ],
+        "type": "object"
+      },
+      "name": "gh_issue_list"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Create a label in a repo if it does not already exist (idempotent — safe to call every time before using a label).",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "color": {
+            "description": "Hex color, no leading #, e.g. \"84b6eb\"",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "description": "Label name",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Repo owner login",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repo name (without owner)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "name",
+          "color"
+        ],
+        "type": "object"
+      },
+      "name": "gh_label_ensure"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Open a pull request in a repo (wraps `gh pr create`). head is the branch to merge FROM; base (default \"main\") is the branch to merge INTO. Returns the created PR URL.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "base": {
+            "description": "Base branch to merge into (default \"main\")",
+            "type": "string"
+          },
+          "body": {
+            "description": "PR body (markdown)",
+            "type": "string"
+          },
+          "draft": {
+            "description": "Open as a draft PR",
+            "type": "boolean"
+          },
+          "head": {
+            "description": "Head branch to merge from",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Repo owner login",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repo name (without owner)",
+            "type": "string"
+          },
+          "title": {
+            "description": "PR title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "title",
+          "head"
+        ],
+        "type": "object"
+      },
+      "name": "gh_pr_create"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "List pull requests in a repo (wraps `gh pr list`) with number, title, url, state, head/base branches, mergeability, and draft flag.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "description": "Max PRs to return (default 50)",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Repo owner login",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repo name (without owner)",
+            "type": "string"
+          },
+          "state": {
+            "description": "Filter by state (default \"open\")",
+            "enum": [
+              "open",
+              "closed",
+              "merged",
+              "all"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo"
+        ],
+        "type": "object"
+      },
+      "name": "gh_pr_list"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": true,
+      "description": "Merge a pull request (wraps `gh pr merge`). Destructive — requires confirm:true. Defaults to a squash merge and deletes the head branch afterwards.",
+      "destructive": true,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "description": "Must be true to proceed — merging cannot be undone",
+            "type": "boolean"
+          },
+          "deleteBranch": {
+            "description": "Delete the head branch after merge (default true)",
+            "type": "boolean"
+          },
+          "method": {
+            "description": "Merge method (default \"squash\")",
+            "enum": [
+              "squash",
+              "merge",
+              "rebase"
+            ],
+            "type": "string"
+          },
+          "number": {
+            "description": "PR number to merge",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Repo owner login",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repo name (without owner)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "number",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "gh_pr_merge"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Copy a project to a new one (fields/views copied; items only with drafts:true).",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "drafts": {
+            "description": "Include draft issues",
+            "type": "boolean"
+          },
+          "number": {
+            "description": "Source project number",
+            "type": "number"
+          },
+          "sourceOwner": {
+            "description": "Owner of the source project",
+            "type": "string"
+          },
+          "targetOwner": {
+            "description": "Owner for the new copy",
+            "type": "string"
+          },
+          "title": {
+            "description": "Title for the new project",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sourceOwner",
+          "number",
+          "targetOwner",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_copy"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Create a new GitHub Project (v2) board for a user or org.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "owner": {
+            "description": "GitHub username or org login to own the project",
+            "type": "string"
+          },
+          "title": {
+            "description": "Project title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_create"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": true,
+      "description": "Permanently DELETE a project board and all its items. Irreversible — requires confirm:true.",
+      "destructive": true,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "description": "Must be true to proceed — cannot be undone",
+            "type": "boolean"
+          },
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_delete"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Convert a draft-issue item into a real repository issue (convertProjectV2DraftIssueItemToIssue). The item keeps its board field values.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "itemId": {
+            "description": "Draft item node ID",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repo name (without owner) to create the issue in",
+            "type": "string"
+          },
+          "repoOwner": {
+            "description": "Owner of the repo to create the issue in",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId",
+          "repoOwner",
+          "repo"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_draft_convert"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Edit a draft issue item's title and/or body (updateProjectV2DraftIssue). Accepts the project ITEM id (PVTI_…, from gh_project_item_create/list) and resolves the draft-content id (DI_…) that gh requires; a DI_ id is also accepted directly. For draft items only; use gh_project_item_edit for field values.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "description": "New body (markdown)",
+            "type": "string"
+          },
+          "itemId": {
+            "description": "Draft item node ID (PVTI_…) or draft-content id (DI_…)",
+            "type": "string"
+          },
+          "title": {
+            "description": "New title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "itemId"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_draft_edit"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Edit a project's metadata: title, description (shortDescription), README body, visibility, and open/closed state. Pass only the fields you want to change. Maps to `gh project edit` (title/description/readme/visibility) and `gh project close`/`--undo` (closed).",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "closed": {
+            "description": "true = close the project, false = reopen it",
+            "type": "boolean"
+          },
+          "description": {
+            "description": "New short description",
+            "type": "string"
+          },
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          },
+          "readme": {
+            "description": "New README body (markdown)",
+            "type": "string"
+          },
+          "title": {
+            "description": "New title",
+            "type": "string"
+          },
+          "visibility": {
+            "description": "Project visibility",
+            "enum": [
+              "PUBLIC",
+              "PRIVATE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_edit"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Create a custom field on a project. NOTE: Projects v2 ships reserved built-in fields (Status, Title, Assignees, Labels, Milestone, Repository, ...) — creating a field with one of those exact names throws a GraphQL error. Call gh_project_field_list first and reuse the existing field ID instead of creating a duplicate.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "dataType": {
+            "description": "Field data type",
+            "enum": [
+              "TEXT",
+              "NUMBER",
+              "DATE",
+              "SINGLE_SELECT",
+              "ITERATION"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "description": "Field name",
+            "type": "string"
+          },
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "options": {
+            "description": "Option labels — required when dataType is SINGLE_SELECT",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number",
+          "name",
+          "dataType"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_field_create"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": true,
+      "description": "Permanently DELETE a custom field and its values on all items. Destructive — requires confirm:true. Built-in fields cannot be deleted.",
+      "destructive": true,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "description": "Must be true to proceed",
+            "type": "boolean"
+          },
+          "fieldId": {
+            "description": "Field node ID (from gh_project_field_list)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fieldId",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_field_delete"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "List all fields on a project (built-in like Status/Assignees plus custom fields), with their IDs and option IDs for single-select fields. Always call this before gh_project_field_create or gh_project_item_edit to get current IDs — never hardcode them.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_field_list"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Update the options of an existing SINGLE_SELECT field (add / rename / recolor). WARNING: the underlying updateProjectV2Field mutation REPLACES the entire option set — options you omit are deleted (along with their item assignments). This tool guards against that: it fetches the current options and, unless allowRemove=true, errors if your list drops any existing option name. Pass the FULL desired option set.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "allowRemove": {
+            "description": "Permit dropping existing options (deletes them + their assignments). Default false.",
+            "type": "boolean"
+          },
+          "fieldId": {
+            "description": "SINGLE_SELECT field node ID (from gh_project_field_list)",
+            "type": "string"
+          },
+          "options": {
+            "description": "The COMPLETE desired option list (include existing options you want to keep)",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "color": {
+                  "description": "Default GRAY",
+                  "enum": [
+                    "GRAY",
+                    "BLUE",
+                    "GREEN",
+                    "YELLOW",
+                    "ORANGE",
+                    "RED",
+                    "PINK",
+                    "PURPLE"
+                  ],
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "fieldId",
+          "options"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_field_option_update"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Add an existing issue or pull request to a project board by URL.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          },
+          "url": {
+            "description": "Full URL of the issue or PR to add",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number",
+          "url"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_item_add"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Archive (or unarchive) an item on a project board without deleting the underlying issue/PR.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "itemId": {
+            "description": "Project item node ID",
+            "type": "string"
+          },
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          },
+          "undo": {
+            "description": "Unarchive instead of archive",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "owner",
+          "number",
+          "itemId"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_item_archive"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Create a draft-issue item directly on a project board (no repo issue). Draft issues live only on the board until converted with gh_project_draft_convert. Returns the created item (with its id).",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "description": "Draft issue body (markdown)",
+            "type": "string"
+          },
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          },
+          "title": {
+            "description": "Draft issue title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_item_create"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": true,
+      "description": "Remove an item from a project board permanently (distinct from archive). Does NOT delete the underlying issue/PR. Destructive — requires confirm:true.",
+      "destructive": true,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "description": "Must be true to proceed",
+            "type": "boolean"
+          },
+          "itemId": {
+            "description": "Project item node ID",
+            "type": "string"
+          },
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number",
+          "itemId",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_item_delete"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Set (or clear) one field value on a project item. Get projectId from gh_project_view/gh_project_create, itemId from gh_project_item_list/gh_project_item_add, and fieldId/optionId from gh_project_field_list.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "clear": {
+            "description": "Clear the field instead of setting a value",
+            "type": "boolean"
+          },
+          "fieldId": {
+            "description": "Field node ID",
+            "type": "string"
+          },
+          "itemId": {
+            "description": "Project item node ID",
+            "type": "string"
+          },
+          "projectId": {
+            "description": "Project node ID (e.g. \"PVT_kwHODNwyZM4B...\")",
+            "type": "string"
+          },
+          "value": {
+            "description": "The value to set: raw text, a number as string, an ISO date (YYYY-MM-DD), a single-select option ID, or an iteration ID. Omit (with clear=true) to clear the field.",
+            "type": "string"
+          },
+          "valueType": {
+            "description": "Which kind of value this field holds",
+            "enum": [
+              "text",
+              "number",
+              "date",
+              "single_select",
+              "iteration"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "projectId",
+          "itemId",
+          "fieldId",
+          "valueType"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_item_edit"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "List items (issues, PRs, draft issues) on a project board, with their current field values.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "description": "Max items to return (default 200)",
+            "type": "number"
+          },
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          },
+          "query": {
+            "description": "Projects filter syntax, e.g. \"assignee:octocat -status:Done\"",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_item_list"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Reorder an item on the board. Places it after afterItemId, or at the top if omitted (updateProjectV2ItemPosition).",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "afterItemId": {
+            "description": "Place the item after this item; omit to move to the top",
+            "type": "string"
+          },
+          "itemId": {
+            "description": "Item node ID to move",
+            "type": "string"
+          },
+          "projectId": {
+            "description": "Project node ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "projectId",
+          "itemId"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_item_move"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Configure an ITERATION (sprint) field: set its iteration cadence and iterations. Like option editing, updateProjectV2Field replaces the iteration configuration — pass the full set of iterations you want. Each iteration is defined by a startDate (YYYY-MM-DD) and a duration in days.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "fieldId": {
+            "description": "ITERATION field node ID (from gh_project_field_list)",
+            "type": "string"
+          },
+          "iterations": {
+            "description": "The iterations to configure",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "duration": {
+                  "description": "Length in days",
+                  "type": "number"
+                },
+                "startDate": {
+                  "description": "ISO date YYYY-MM-DD",
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "startDate",
+                "duration"
+              ],
+              "type": "object"
+            },
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "fieldId",
+          "iterations"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_iteration_configure"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Link a GitHub Project to a repository (or team), so items in that repo can be auto-added and the project shows up on the repo page.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repository to link, as \"owner/repo\"",
+            "type": "string"
+          }
+        },
+        "required": [
+          "number",
+          "owner",
+          "repo"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_link"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "List GitHub Projects (v2) owned by a user or organization.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "owner": {
+            "description": "GitHub username or org login, e.g. \"thisis-romar\"",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_list"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Mark (or, with undo:true, unmark) an ORG-owned project as a template. User-owned projects cannot be templates.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Org owner login",
+            "type": "string"
+          },
+          "undo": {
+            "description": "Unmark instead of mark",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "owner",
+          "number"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_mark_template"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Unlink a project from a repository or team (mirror of gh_project_link).",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Repository to unlink, as \"owner/repo\"",
+            "type": "string"
+          },
+          "team": {
+            "description": "Team to unlink, as \"org/team-slug\"",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_unlink"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Get full details of one GitHub Project: title, description, visibility, item count, fields, and views (including view layout/createdAt, which the plain gh CLI does not surface).",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "number": {
+            "description": "Project number, e.g. 5",
+            "type": "number"
+          },
+          "owner": {
+            "description": "GitHub username or org login",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_view"
+    },
+    {
+      "capabilities": [
+        "browser-ui"
+      ],
+      "confirmationRequired": false,
+      "description": "Create (or, with reapply=true, re-apply settings to existing) views on a GitHub Project via Playwright driving GitHub's web UI in your existing logged-in Edge browser. Required because GitHub's GraphQL API has no createProjectV2View mutation and cannot set view layout. By default this only CREATES views and REPORTS (does not delete) ghost tabs and layout-mismatched views — pass pruneGhostViews:true to allow those deletions/recreations.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          },
+          "pruneGhostViews": {
+            "description": "Destructive: DELETE view tabs not in the spec and delete+recreate layout-mismatched views. Default false (only report them under wouldPrune).",
+            "type": "boolean"
+          },
+          "reapply": {
+            "description": "Re-apply filter/groupBy to views that already exist instead of skipping them",
+            "type": "boolean"
+          },
+          "views": {
+            "description": "Declarative view spec — existing views with matching names are skipped unless reapply=true",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "filter": {
+                  "description": "GitHub Projects filter syntax, e.g. \"status:Backlog\" or \"-status:Done -status:Backlog\"",
+                  "type": "string"
+                },
+                "groupBy": {
+                  "description": "Field name to group board columns by, e.g. \"Status\" or \"Owner\"",
+                  "type": "string"
+                },
+                "layout": {
+                  "description": "Default: table",
+                  "enum": [
+                    "table",
+                    "board",
+                    "roadmap"
+                  ],
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "owner",
+          "number",
+          "views"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_view_create"
+    },
+    {
+      "capabilities": [
+        "browser-ui"
+      ],
+      "confirmationRequired": true,
+      "description": "Delete one view (tab) from a GitHub Project via Playwright driving the web UI. Destructive — requires confirm:true.",
+      "destructive": true,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "description": "Must be true to proceed — deleting a view cannot be undone",
+            "type": "boolean"
+          },
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          },
+          "viewName": {
+            "description": "Exact name of the view to delete",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number",
+          "viewName",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_view_delete"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "List a project's views (name, number, layout, createdAt) via GraphQL. Read-only — GitHub's API has no mutation for creating or changing view layout; use gh_project_view_create for that.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "number": {
+            "description": "Project number",
+            "type": "number"
+          },
+          "owner": {
+            "description": "Project owner login",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "number"
+        ],
+        "type": "object"
+      },
+      "name": "gh_project_views_list"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Post a status update on a project (the \"Add status update\" feature on the project overview page). Requires project write scope.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "description": "Status update body (markdown)",
+            "type": "string"
+          },
+          "projectId": {
+            "description": "Project node ID",
+            "type": "string"
+          },
+          "status": {
+            "description": "Status value",
+            "enum": [
+              "ON_TRACK",
+              "AT_RISK",
+              "OFF_TRACK",
+              "COMPLETE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "projectId",
+          "status"
+        ],
+        "type": "object"
+      },
+      "name": "gh_status_update_create"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": true,
+      "description": "Delete a project status update. Destructive — requires confirm:true.",
+      "destructive": true,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "description": "Must be true to proceed",
+            "type": "boolean"
+          },
+          "statusUpdateId": {
+            "description": "Status update node ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "statusUpdateId",
+          "confirm"
+        ],
+        "type": "object"
+      },
+      "name": "gh_status_update_delete"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Edit an existing project status update (any of status/body/startDate/targetDate).",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "startDate": {
+            "description": "YYYY-MM-DD",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ON_TRACK",
+              "AT_RISK",
+              "OFF_TRACK",
+              "COMPLETE",
+              "INACTIVE"
+            ],
+            "type": "string"
+          },
+          "statusUpdateId": {
+            "description": "Status update node ID (from gh_status_update_list)",
+            "type": "string"
+          },
+          "targetDate": {
+            "description": "YYYY-MM-DD",
+            "type": "string"
+          }
+        },
+        "required": [
+          "statusUpdateId"
+        ],
+        "type": "object"
+      },
+      "name": "gh_status_update_edit"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "List a project's status updates (id, status, body, dates).",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "projectId": {
+            "description": "Project node ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "projectId"
+        ],
+        "type": "object"
+      },
+      "name": "gh_status_update_list"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Link an issue as a sub-issue of a parent (epic) issue. Both IDs must be GraphQL node IDs (not issue numbers) — get them from the `id` field returned by gh_issue_list.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "childNodeId": {
+            "description": "Child issue GraphQL node ID to attach as a sub-issue",
+            "type": "string"
+          },
+          "parentNodeId": {
+            "description": "Parent (epic) issue GraphQL node ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "parentNodeId",
+          "childNodeId"
+        ],
+        "type": "object"
+      },
+      "name": "gh_subissue_link"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Reorder a sub-issue within its parent (reprioritizeSubIssue). Places it after afterChildNodeId, or at the top if omitted.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "afterChildNodeId": {
+            "description": "Place after this sub-issue; omit for top",
+            "type": "string"
+          },
+          "childNodeId": {
+            "description": "Sub-issue node ID to move",
+            "type": "string"
+          },
+          "parentNodeId": {
+            "description": "Parent issue node ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "parentNodeId",
+          "childNodeId"
+        ],
+        "type": "object"
+      },
+      "name": "gh_subissue_reprioritize"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Remove a sub-issue link (removeSubIssue). Detaches the child; deletes neither issue.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "childNodeId": {
+            "description": "Sub-issue GraphQL node ID to detach",
+            "type": "string"
+          },
+          "parentNodeId": {
+            "description": "Parent issue GraphQL node ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "parentNodeId",
+          "childNodeId"
+        ],
+        "type": "object"
+      },
+      "name": "gh_subissue_unlink"
+    }
+  ]
+}
