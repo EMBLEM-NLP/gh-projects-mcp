@@ -1,7 +1,7 @@
 ---
 name: gh-project-manage
 description: Manage GitHub Projects v2 through gh-projects-mcp across Claude, Codex, and other MCP clients. Use for project boards, fields, items, views, issues, PRs, sub-issues, status updates, audits, prioritization, and github.com users/orgs project URLs.
-version: 1.6.0
+version: 1.7.0
 ---
 
 # GitHub Projects Manager
@@ -44,7 +44,7 @@ The skill is generic. Never hardcode an owner, project number, project ID, field
 | Remove item from board | `gh_project_item_delete` — confirm-gated |
 | Reorder item | `gh_project_item_move` |
 | List/create/edit/delete project views | `gh_project_views_list`, `gh_project_view_create`, `gh_project_view_edit`, `gh_project_view_delete` |
-| Create/list repo issues | `gh_issue_create`, `gh_issue_list` |
+| Create/list/edit/close repo issues | `gh_issue_create`, `gh_issue_list`, `gh_issue_edit`, `gh_issue_close` — close is confirm-gated |
 | Ensure repo label | `gh_label_ensure` |
 | Open/list/merge PRs | `gh_pr_create`, `gh_pr_list`, `gh_pr_merge` — merge confirm-gated |
 | Link/unlink/reorder sub-issues | `gh_subissue_link`, `gh_subissue_unlink`, `gh_subissue_reprioritize` |
@@ -105,7 +105,7 @@ When the task changes repository code rather than only board metadata:
 
 ## Safety
 
-- Never delete projects, fields, items, views, status updates, or merge PRs without the user's explicit authorization and the tool's confirmation gate.
+- Never delete projects, fields, items, views, status updates, close issues, or merge PRs without the user's explicit authorization and the tool's confirmation gate.
 - Archiving a Project item is not the same as closing its underlying issue.
 - Removing an item from a board does not delete its underlying issue/PR.
 - If a mutation fails, surface the actual error. Do not retry blindly or silently switch backend/account.

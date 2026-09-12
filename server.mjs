@@ -20,10 +20,11 @@ import { gh, gql } from './lib/gql.mjs';
 import { registerViewTools } from './lib/tools-views-graphql.mjs';
 import { VIEW_SELECTION, normalizeView } from './lib/view-api.mjs';
 import { registerPrTools } from './lib/tools-pr.mjs';
+import { registerIssueLifecycleTools } from './lib/tools-issue-lifecycle.mjs';
 import { gqlStr, makeOwnerRoot, assertConfirmed } from './lib/helpers.mjs';
 import { createProjectField, updateSelectFieldOptions, configureIterationField, updateMultiSelectItemField } from './lib/field-mutations.mjs';
 
-const server = new McpServer({ name: 'gh-projects-mcp', version: '1.6.0' });
+const server = new McpServer({ name: 'gh-projects-mcp', version: '1.7.0' });
 
 function text(t) {
   return { content: [{ type: 'text', text: typeof t === 'string' ? t : JSON.stringify(t, null, 2) }] };
@@ -672,6 +673,7 @@ server.tool(
 
 registerViewTools(server);
 registerPrTools(server);
+registerIssueLifecycleTools(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
