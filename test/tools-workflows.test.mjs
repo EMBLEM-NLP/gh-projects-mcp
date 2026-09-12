@@ -10,6 +10,7 @@ function fakePage() {
   return {
     async goto() {},
     async waitForTimeout() {},
+    async screenshot() {},
   };
 }
 
