@@ -1,5 +1,7 @@
 # gh-projects-mcp
 
+**Version 1.4.0**
+
 MCP server for managing [GitHub Projects v2](https://docs.github.com/en/issues/planning-and-tracking-with-projects) —
 fields, items, views, sub-issues, and status updates — from any repo, chat, or editor that speaks MCP
 (Claude Code, Claude Desktop, VS Code Copilot, etc.).
@@ -49,6 +51,9 @@ existing logged-in Edge browser session (not a fresh headless browser).
 | `gh_project_view_delete` | Delete a view (Playwright) |
 | `gh_issue_create` | Create an issue |
 | `gh_issue_list` | List issues (includes GraphQL node `id`) |
+| `gh_pr_create` | Open a pull request |
+| `gh_pr_list` | List pull requests (number, state, head/base, mergeability) |
+| `gh_pr_merge` | Merge a pull request (confirm-gated) |
 | `gh_label_ensure` | Idempotent label creation |
 | `gh_subissue_link` | Link a sub-issue to a parent/epic |
 | `gh_subissue_unlink` | Remove a sub-issue link |

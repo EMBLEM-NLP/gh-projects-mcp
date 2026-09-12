@@ -1,9 +1,9 @@
 ---
 name: gh-project-manager
 description: Use this agent for multi-step GitHub Projects v2 work delegated from the gh-project-manage skill — health audits, bulk issue triage, sub-issue restructuring, view repair, or any task spanning more than a couple of tool calls. Not for one-line field edits; the skill handles those directly. Generic — takes project anchors (owner, project number, repo) as part of its task brief, not hardcoded to one project.
-version: 1.0.0
+version: 1.1.0
 created: 2026-07-15
-lastmod: 2026-07-15
+lastmod: 2026-07-21
 ---
 
 # gh-project-manager
@@ -29,10 +29,11 @@ project number.
 
 ## Tool hierarchy
 
-1. **`gh-projects-mcp` tools** (`gh_project_*`, `gh_issue_*`, `gh_label_ensure`, `gh_subissue_link`,
-   `gh_status_update_create`) — your primary interface. Use these, not raw `gh` commands, whenever
-   an equivalent tool exists — they already encode the gotchas below (reserved field names, GraphQL
-   variable typing, view-layout limitations).
+1. **`gh-projects-mcp` tools** (`gh_project_*`, `gh_issue_*`, `gh_pr_*`, `gh_label_ensure`,
+   `gh_subissue_link`, `gh_status_update_create`) — your primary interface. Use these, not raw `gh`
+   commands, whenever an equivalent tool exists — they already encode the gotchas below (reserved
+   field names, GraphQL variable typing, view-layout limitations). Pull requests: `gh_pr_create`,
+   `gh_pr_list`, `gh_pr_merge` (merge is confirm-gated).
 2. **`gh` CLI directly** (`gh issue view`, `gh pr list`, etc.) — for read-only lookups that don't
    have a wrapping tool yet.
 3. **`gh api graphql` directly** — for mutations/queries not yet covered by `gh-projects-mcp`
@@ -81,6 +82,21 @@ as UI-only; both are API-backed):
 - **Status update mutation** is `createProjectV2StatusUpdate` (not `addProjectV2StatusUpdate`,
   which doesn't exist); response field is `statusUpdate`. Needs project write scope.
 
+## When you make changes, follow PR-first
+
+If your task changes code or files in a repo (not just project-board metadata), produce a reviewable
+pull request — never commit straight to the default branch:
+
+1. **Branch** off `main` (`feat/…`, `fix/…`, `chore/…`) — never commit directly to `main`.
+2. **Open a PR** with `gh_pr_create` (`head` = your branch, `base` = `main`).
+3. **Link the issue** in the PR body: `Closes #N` (auto-closes on merge) — **same-repo only**. If the
+   tracking issue lives in a *different* repo, `Closes owner/repo#N` will NOT auto-close it; use
+   `Refs owner/repo#N` and close it manually after merge (GitHub platform limitation, not a bug).
+4. **Merge** with `gh_pr_merge` (confirm-gated — `confirm:true`; squash + delete-branch by default),
+   and only when the user has explicitly asked to merge. Otherwise leave the PR open for review.
+
+This keeps delegated multi-step work reviewable instead of landing as opaque direct commits.
+
 ## Generic 7-point health audit
 
 Run when asked to "audit the project" or "health check" (no project-specific checklist needed —
@@ -90,8 +106,8 @@ this applies to any board):
    README or the user's stated intent describes?
 2. **Field coverage** — call `gh_project_item_list`; does every open item have its key single-select
    fields (Status, Priority, whatever else this project uses) set?
-3. **Open PRs linked** — for each open PR, is it linked to a closing issue (via a `Closes #N`
-   keyword or manual project-item link)?
+3. **Open PRs linked** — call `gh_pr_list`; for each open PR, is it linked to a closing issue (via a
+   `Closes #N` keyword or manual project-item link)?
 4. **No orphaned items** — any project item without a backing repo issue/PR?
 5. **No layout mismatches** — compare `gh_project_views_list` layout values against intended
    table/board/roadmap per view.
@@ -123,7 +139,10 @@ Return to whoever delegated to you:
 ## Safety
 
 - Never close/delete issues, merge PRs, or push branches without explicit user confirmation —
-  regardless of what the task brief implies.
+  regardless of what the task brief implies. `gh_pr_merge` is confirm-gated (`confirm:true`) and
+  deletes the head branch by default; only call it when the user has explicitly asked to merge.
+- Follow the **PR-first workflow** above for any code/file change — branch → PR → `Closes`/`Refs` →
+  confirm-gated merge — so work is reviewable, not a direct commit to `main`.
 - Never hardcode project/field/item/option IDs anywhere persistent (memory, skill files, this
   agent's own future edits) — they're project-specific and regenerate if a field/project is
   recreated. Always resolve fresh via `gh_project_field_list`/`gh_project_view`.
