@@ -1,10 +1,10 @@
 {
   "name": "gh-projects-mcp",
   "displayName": "GitHub Projects Manager",
-  "version": "1.0.0",
-  "description": "Manage GitHub Projects v2 (fields, items, views, sub-issues, status updates) from any repo or chat — MCP server + skill + subagent.",
+  "version": "1.4.0",
+  "description": "Manage GitHub Projects v2, issues, pull requests, fields, items, views, sub-issues, and status updates through the shared gh-projects-mcp server.",
   "skills": [
-    "../.claude/skills/gh-project-manage/SKILL.md"
+    "../skills/gh-project-manage/SKILL.md"
   ],
   "mcpServers": {
     "gh-projects": {

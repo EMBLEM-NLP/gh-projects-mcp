@@ -6,9 +6,9 @@ import { dirname, join } from 'node:path';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-// Every gh_* tool name referenced by the skill router prose.
+// Every gh_* tool name referenced by the canonical cross-client skill router.
 function skillReferencedTools() {
-  const md = readFileSync(join(repoRoot, '.claude/skills/gh-project-manage/SKILL.md'), 'utf8');
+  const md = readFileSync(join(repoRoot, 'skills/gh-project-manage/SKILL.md'), 'utf8');
   return new Set(md.match(/gh_[a-z_]+/g) ?? []);
 }
 
@@ -26,20 +26,26 @@ function registeredTools() {
   return names;
 }
 
-test('every tool the skill router references is registered in the server', () => {
+test('every tool the canonical skill router references is registered in the server', () => {
   const referenced = skillReferencedTools();
   const registered = registeredTools();
-  assert.ok(referenced.size > 0, 'expected the SKILL.md router to reference some gh_* tools');
+  assert.ok(referenced.size > 0, 'expected the canonical SKILL.md router to reference some gh_* tools');
   const orphans = [...referenced].filter((t) => !registered.has(t));
-  assert.deepEqual(orphans, [], `SKILL.md references tools not registered in the server: ${orphans.join(', ')}`);
+  assert.deepEqual(orphans, [], `canonical SKILL.md references tools not registered in the server: ${orphans.join(', ')}`);
 });
 
-test('the gh-project-manager delegation subagent file exists', () => {
+test('the Claude delegation subagent file exists', () => {
   const agentPath = join(repoRoot, '.claude/agents/gh-project-manager.md');
   assert.ok(existsSync(agentPath), `missing delegation subagent at ${agentPath}`);
 });
 
-test('sanity: the new gh_pr_* tools are registered', () => {
+test('the Claude repo-local skill is only a shim to the canonical skill', () => {
+  const shim = readFileSync(join(repoRoot, '.claude/skills/gh-project-manage/SKILL.md'), 'utf8');
+  assert.match(shim, /skills\/gh-project-manage\/SKILL\.md/);
+  assert.match(shim, /Do not add workflow\/tool instructions here/);
+});
+
+test('sanity: the gh_pr_* tools are registered', () => {
   const registered = registeredTools();
   for (const t of ['gh_pr_create', 'gh_pr_list', 'gh_pr_merge']) {
     assert.ok(registered.has(t), `expected ${t} to be registered`);

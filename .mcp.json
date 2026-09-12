@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "gh-projects": {
+      "command": "node",
+      "args": [
+        "server.mjs"
+      ],
+      "cwd": ".",
+      "env_vars": [
+        "GH_PROJECTS_BACKEND",
+        "GH_PROJECTS_TOKEN",
+        "GITHUB_TOKEN",
+        "GH_PROJECTS_API_URL",
+        "GH_PROJECTS_GRAPHQL_URL"
+      ]
+    }
+  }
+}

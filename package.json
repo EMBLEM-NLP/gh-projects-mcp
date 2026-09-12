@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "contract:check": "node scripts/tool-contract.mjs check",
     "contract:write": "node scripts/tool-contract.mjs write",
-    "contract:verify": "node scripts/tool-contract.mjs verify"
+    "contract:verify": "node scripts/tool-contract.mjs verify",
+    "package:verify": "node scripts/client-package-contract.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

@@ -1,0 +1,39 @@
+{
+  "name": "gh-projects-mcp",
+  "version": "1.4.0",
+  "description": "Manage GitHub Projects v2, issues, pull requests, fields, items, sub-issues, views, and status updates through one MCP tool contract.",
+  "author": {
+    "name": "EMBLEM-NLP"
+  },
+  "homepage": "https://github.com/EMBLEM-NLP/gh-projects-mcp",
+  "repository": "https://github.com/EMBLEM-NLP/gh-projects-mcp",
+  "keywords": [
+    "github",
+    "projects-v2",
+    "mcp",
+    "project-management",
+    "codex"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "GitHub Projects Manager",
+    "shortDescription": "Manage GitHub Projects through MCP",
+    "longDescription": "Create, inspect, organize, and maintain GitHub Projects v2 boards with shared issue, pull-request, field, item, sub-issue, view, and status-update workflows.",
+    "developerName": "EMBLEM-NLP",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/EMBLEM-NLP/gh-projects-mcp",
+    "defaultPrompt": [
+      "Audit and organize this GitHub Project board.",
+      "Rank the active Project work by priority and dependency.",
+      "Inspect this GitHub Project and tell me what should happen next."
+    ],
+    "brandColor": "#24292F",
+    "screenshots": []
+  }
+}
