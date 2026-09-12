@@ -12,3 +12,10 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test
+      - run: npm run contract:check
+      - run: npm run contract:write
+      - name: Upload generated MCP tool contract
+        uses: actions/upload-artifact@v4
+        with:
+          name: gh-projects-tool-contract
+          path: contracts/tools.json
