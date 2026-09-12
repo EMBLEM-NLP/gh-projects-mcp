@@ -27,3 +27,4 @@ jobs:
           git add server.mjs lib/tools-workflows.mjs package.json package-lock.json .claude-plugin/plugin.json .codex-plugin/plugin.json skills/gh-project-manage/SKILL.md .claude/skills/gh-project-manage/SKILL.md .claude/agents/gh-project-manager.md README.md contracts/tools.json
           git commit -m "feat: add verified workflow auto-add configuration"
           git push origin HEAD:${GITHUB_REF_NAME}
+# one-shot bootstrap
