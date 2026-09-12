@@ -27,8 +27,14 @@ function normalize(value) {
   );
 }
 
+const BROWSER_UI_TOOLS = new Set([
+  'gh_project_view_create',
+  'gh_project_view_delete',
+  'gh_project_workflow_autoadd_configure',
+]);
+
 function capabilityTags(name) {
-  if (name === 'gh_project_view_create' || name === 'gh_project_view_delete') {
+  if (BROWSER_UI_TOOLS.has(name)) {
     return ['browser-ui'];
   }
   return ['github'];

@@ -1358,7 +1358,7 @@
     },
     {
       "capabilities": [
-        "github"
+        "browser-ui"
       ],
       "confirmationRequired": false,
       "description": "Configure the \"Auto-add to project\" built-in workflow so every issue/PR opened in a given repo (optionally filtered) is automatically added to this project. Drives GitHub's Workflows settings panel via Playwright/CDP in your existing logged-in Edge — there is no GraphQL/REST mutation for project workflows (only deleteProjectV2Workflow exists). Requires the local Edge+CDP setup described in this repo's README; cannot run from a session with no browser access.",
