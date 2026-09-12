@@ -28,8 +28,8 @@ function normalize(value) {
 }
 
 function capabilityTags(name) {
-  if (name === 'gh_project_view_create' || name === 'gh_project_view_delete') {
-    return ['browser-ui'];
+  if (name === 'gh_project_view_create' || name === 'gh_project_view_edit') {
+    return ['github', 'browser-ui:groupBy'];
   }
   return ['github'];
 }

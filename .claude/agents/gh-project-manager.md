@@ -1,9 +1,9 @@
 ---
 name: gh-project-manager
 description: Use this agent for multi-step GitHub Projects v2 work delegated from the gh-project-manage skill — health audits, bulk issue triage, sub-issue restructuring, view repair, or any task spanning more than a couple of tool calls. Not for one-line field edits; the skill handles those directly. Generic — takes project anchors (owner, project number, repo) as part of its task brief, not hardcoded to one project.
-version: 1.1.0
+version: 1.2.0
 created: 2026-07-15
-lastmod: 2026-07-21
+lastmod: 2026-09-12
 ---
 
 # gh-project-manager
@@ -40,9 +40,10 @@ project number.
    (Insights charts, workflow authoring — see "Not yet in the MCP" below). On Windows, always build these via `spawnSync`
    with a `-f query=...` argument array, never `execSync` with an interpolated string — shell
    argument splitting breaks multi-word GraphQL queries.
-4. **Playwright, ad hoc** — should rarely be needed. `gh_project_view_create`/`gh_project_view_delete`
-   already cover view creation/repair via CDP-attached Edge. Only reach for raw Playwright if a task
-   needs UI automation those tools don't cover (e.g. Insights charts — see below).
+4. **Playwright, ad hoc** — should rarely be needed. Normal view CRUD is GraphQL-backed through
+   `gh_project_view_create` / `gh_project_view_edit` / `gh_project_view_delete`; only optional `groupBy`
+   uses the MCP's isolated Edge/CDP fallback. Reach for raw Playwright only for genuinely UI-only
+   features the MCP does not cover (for example Insights authoring).
 
 ## Not yet in the MCP
 
@@ -111,9 +112,9 @@ this applies to any board):
 4. **No orphaned items** — any project item without a backing repo issue/PR?
 5. **No layout mismatches** — compare `gh_project_views_list` layout values against intended
    table/board/roadmap per view.
-6. **No billing banner** — if you load the project page via `gh_project_view_create`'s Playwright
-   path for any other reason, note if a payment-issue banner is visible; project automations can
-   fail silently behind one. Out of scope to fix — surface it, don't act on it.
+6. **Browser-only anomalies** — only when a workflow actually uses the optional UI fallback
+   (for example view `groupBy` or an Insights playbook), surface blocking authentication/billing
+   banners. Normal view CRUD should not open the browser just to perform this check.
 7. **Closed-issue PR linkage** — spot-check that closed issues have a merged PR with a `Closes`
    keyword, not just a manual close.
 

@@ -2,9 +2,9 @@
 /**
  * gh-projects-mcp — MCP server for managing GitHub Projects v2.
  *
- * Thin wrappers over `gh project` / `gh issue` / `gh label` and the GraphQL
- * API, plus Playwright/CDP-driven view management (GitHub's API has no
- * createProjectV2View mutation — view creation is web-UI only).
+ * Thin wrappers over GitHub REST/GraphQL and the local `gh` CLI compatibility
+ * backend. Project view create/edit/delete are GraphQL-backed; only optional
+ * view settings that GitHub still omits from GraphQL (currently groupBy) use CDP.
  *
  * Every tool takes owner/repo/project-number as explicit parameters —
  * nothing is hardcoded to one project, so this works the same from any
@@ -17,12 +17,13 @@ import { writeFileSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { gh, gql } from './lib/gql.mjs';
-import { registerViewTools } from './lib/tools-views.mjs';
+import { registerViewTools } from './lib/tools-views-graphql.mjs';
+import { VIEW_SELECTION, normalizeView } from './lib/view-api.mjs';
 import { registerPrTools } from './lib/tools-pr.mjs';
 import { gqlStr, makeOwnerRoot, assertConfirmed } from './lib/helpers.mjs';
 import { createProjectField, updateSelectFieldOptions, configureIterationField, updateMultiSelectItemField } from './lib/field-mutations.mjs';
 
-const server = new McpServer({ name: 'gh-projects-mcp', version: '1.5.0' });
+const server = new McpServer({ name: 'gh-projects-mcp', version: '1.6.0' });
 
 function text(t) {
   return { content: [{ type: 'text', text: typeof t === 'string' ? t : JSON.stringify(t, null, 2) }] };
@@ -78,9 +79,9 @@ server.tool(
     let views = [];
     try {
       const root = ownerRoot(owner);
-      const q = `{ ${root}(login: "${gqlStr(owner)}") { projectV2(number: ${number}) { createdAt updatedAt views(first: 20) { nodes { name number createdAt layout } } } } }`;
+      const q = `{ ${root}(login: "${gqlStr(owner)}") { projectV2(number: ${number}) { createdAt updatedAt views(first: 100) { nodes { ${VIEW_SELECTION} } } } } }`;
       const vr = gql(q);
-      views = vr.data[root]?.projectV2?.views?.nodes ?? [];
+      views = (vr.data[root]?.projectV2?.views?.nodes ?? []).map(normalizeView);
     } catch { /* view query unavailable — omit views */ }
     return text({ ...project, views });
   }),
@@ -475,20 +476,20 @@ server.tool(
   }),
 );
 
-// ── Views (read-only — creation/layout requires Playwright, see tools-views.mjs) ──
+// ── Views (GraphQL-backed; optional groupBy remains a UI fallback) ─────────────
 
 server.tool(
   'gh_project_views_list',
-  'List a project\'s views (name, number, layout, createdAt) via GraphQL. Read-only — GitHub\'s API has no mutation for creating or changing view layout; use gh_project_view_create for that.',
+  'List a project\'s views with stable node IDs, layout, filter, ordered visible fields, and current group-by configuration.',
   {
     owner: z.string().describe('Project owner login'),
     number: z.number().describe('Project number'),
   },
   async ({ owner, number }) => safe(() => {
     const root = ownerRoot(owner);
-    const q = `{ ${root}(login: "${gqlStr(owner)}") { projectV2(number: ${number}) { views(first: 30) { nodes { name number createdAt layout } } } } }`;
+    const q = `{ ${root}(login: "${gqlStr(owner)}") { projectV2(number: ${number}) { views(first: 100) { nodes { ${VIEW_SELECTION} } } } } }`;
     const r = gql(q);
-    return text(r.data[root]?.projectV2?.views?.nodes ?? []);
+    return text((r.data[root]?.projectV2?.views?.nodes ?? []).map(normalizeView));
   }),
 );
 
