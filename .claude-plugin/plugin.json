@@ -1,7 +1,7 @@
 {
   "name": "gh-projects-mcp",
   "displayName": "GitHub Projects Manager",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "Manage GitHub Projects v2, issues, pull requests, fields, items, views, sub-issues, and status updates through the shared gh-projects-mcp server.",
   "skills": [
     "../skills/gh-project-manage/SKILL.md"
