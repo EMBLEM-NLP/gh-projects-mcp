@@ -22,6 +22,7 @@ import { VIEW_SELECTION, normalizeView } from './lib/view-api.mjs';
 import { registerPrTools } from './lib/tools-pr.mjs';
 import { registerIssueLifecycleTools } from './lib/tools-issue-lifecycle.mjs';
 import { registerWorkflowTools } from './lib/tools-workflows.mjs';
+import { registerPreflightTool } from './lib/tools-preflight.mjs';
 import { gqlStr, makeOwnerRoot, assertConfirmed } from './lib/helpers.mjs';
 import { createProjectField, updateSelectFieldOptions, configureIterationField, updateMultiSelectItemField } from './lib/field-mutations.mjs';
 
@@ -676,6 +677,7 @@ registerViewTools(server);
 registerPrTools(server);
 registerIssueLifecycleTools(server);
 registerWorkflowTools(server);
+registerPreflightTool(server);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

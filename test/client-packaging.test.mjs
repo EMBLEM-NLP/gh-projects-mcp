@@ -49,6 +49,7 @@ test('Codex MCP explicitly permits both backend selection and GitHub credential 
     'GITHUB_TOKEN',
     'GH_PROJECTS_API_URL',
     'GH_PROJECTS_GRAPHQL_URL',
+    'GH_PROJECTS_DISABLE_BROWSER_UI',
   ]) {
     assert.ok(vars.has(name), `missing ${name} from Codex MCP env_vars`);
   }

@@ -11,7 +11,8 @@
         "GH_PROJECTS_TOKEN",
         "GITHUB_TOKEN",
         "GH_PROJECTS_API_URL",
-        "GH_PROJECTS_GRAPHQL_URL"
+        "GH_PROJECTS_GRAPHQL_URL",
+        "GH_PROJECTS_DISABLE_BROWSER_UI"
       ]
     }
   }

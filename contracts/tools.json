@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "server": "gh-projects-mcp",
   "serverVersion": "1.8.0",
-  "toolCount": 44,
+  "toolCount": 45,
   "tools": [
     {
       "capabilities": [
@@ -413,6 +413,26 @@
         "type": "object"
       },
       "name": "gh_pr_merge"
+    },
+    {
+      "capabilities": [
+        "github"
+      ],
+      "confirmationRequired": false,
+      "description": "Report this server's runtime capability matrix as structured JSON: transport, selected backend, and rest/graphql/projectsRead/projectsWrite/issuePr/browserUi readiness (ready/unavailable/unknown). Never includes token values. Default is configuration-only detection; pass live:true to also attempt one REST call, one GraphQL call, and (on win32 only) a local Edge/CDP reachability probe.",
+      "destructive": false,
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "properties": {
+          "live": {
+            "description": "Attempt a live REST/GraphQL round trip (and, on win32, a local CDP probe) instead of configuration-only detection. Default false.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "name": "gh_preflight"
     },
     {
       "capabilities": [

@@ -15,6 +15,10 @@ Optional endpoint overrides:
 - `GH_PROJECTS_API_URL`
 - `GH_PROJECTS_GRAPHQL_URL`
 
+Backend selection is one input to the broader runtime capability model — call `gh_preflight` to see
+how it, plus the OS platform and any configured token, map to REST/GraphQL/Projects/issue-PR/
+browser-ui readiness. See [docs/CAPABILITIES.md](CAPABILITIES.md) (#64).
+
 The direct API backend sends credentials only in the Authorization header and never includes them in command-line arguments.
 
 ## Current migration slice

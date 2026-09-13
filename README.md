@@ -25,6 +25,7 @@ view mutation input exposes name/layout/filter/ordered visible fields but not gr
 | Tool | What it does |
 |---|---|
 | `gh_auth_status` | Check `gh` CLI auth + `project` scope |
+| `gh_preflight` | Structured runtime capability report (transport/backend/REST/GraphQL/Projects/issue-PR/browser-ui readiness) — see [docs/CAPABILITIES.md](docs/CAPABILITIES.md) |
 | `gh_project_list` | List a user/org's projects |
 | `gh_project_view` | Full project details: title, fields, views (with layout) |
 | `gh_project_create` | Create a new project board |
@@ -73,7 +74,7 @@ view mutation input exposes name/layout/filter/ordered visible fields but not gr
 
 - Node.js 18+
 - GitHub authentication through either direct API mode (`GH_PROJECTS_TOKEN` / `GITHUB_TOKEN`) or the local [`gh` CLI](https://cli.github.com/) backend with project scope
-- Microsoft Edge signed into github.com only when using an explicitly browser-backed capability such as view `groupBy`, `gh_project_workflow_autoadd_configure`, or UI-only Insights tooling
+- Microsoft Edge signed into github.com only when using an explicitly browser-backed capability such as view `groupBy`, `gh_project_workflow_autoadd_configure`, or UI-only Insights tooling — this is a Windows-desktop-only requirement; every other tool works the same in a container/hosted runtime with no browser at all. See [docs/CAPABILITIES.md](docs/CAPABILITIES.md) for the full runtime capability model, the `gh_preflight` tool, and the expected capability matrix per client.
 
 ## Install
 
@@ -116,6 +117,8 @@ cp .claude/agents/gh-project-manager.md ~/.claude/agents/
 ## Not yet covered
 
 Two broad GitHub Projects areas still need additional tooling: **Insights chart authoring** remains UI-driven, and project **workflow authoring beyond the covered Auto-add workflow** (for example auto-archive and other workflow types) remains UI-only apart from `deleteProjectV2Workflow`. `gh_project_workflow_autoadd_configure` covers Auto-add through the browser and verifies both repository and filter after save. View CRUD itself is API-backed; optional view `groupBy` still uses the isolated browser fallback. Iteration/sprint config and date-setting are API-backed and covered.
+
+Both remaining browser-only tools fail closed with a `capability_unavailable` error — and never import Playwright — on any runtime where the Edge/CDP fallback cannot possibly work (see [docs/CAPABILITIES.md](docs/CAPABILITIES.md)). Remote HTTP transport is tracked separately in #60.
 
 ## License
 

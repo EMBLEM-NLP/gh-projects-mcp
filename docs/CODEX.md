@@ -91,8 +91,8 @@ Repository CI verifies:
 
 Normal Project view create/edit/delete is GraphQL-backed and works in the same API/CLI runtimes as other Project operations. The contract marks `gh_project_view_create` and `gh_project_view_edit` with an optional `browser-ui:groupBy` capability because only the `groupBy` input still requires the logged-in Edge/CDP fallback. `gh_project_view_delete` is fully API-backed.
 
-Remote runtimes that do not expose a browser can still use every API-backed view setting; they should avoid requesting `groupBy` until a non-browser mutation becomes available. Runtime isolation/preflight work is tracked in #64.
+Remote/hosted Codex runtimes do not expose a browser. Calling `gh_project_workflow_autoadd_configure`, or requesting `groupBy` on `gh_project_view_create`/`gh_project_view_edit`, in such a runtime fails immediately with a structured `capability_unavailable: browser-ui — ...` error — Playwright is never imported and no multi-second connection attempt happens first. Every other API-backed view setting still works normally; only `groupBy` needs to wait for a non-browser mutation to exist upstream. Call `gh_preflight` to check `browserUi` (and every other capability) up front instead of discovering this from a tool error. See [docs/CAPABILITIES.md](CAPABILITIES.md) for the full runtime capability model and expected matrix per client (#64).
 
 ## Remote/hosted Codex
 
-Remote MCP transport and a deployment model that does not rely on a local source checkout are tracked in #60. That work must reuse the same server/domain implementation and pass the same `contracts/tools.json` parity gate.
+Remote MCP transport and a deployment model that does not rely on a local source checkout are tracked in #60. That work must reuse the same server/domain implementation and pass the same `contracts/tools.json` parity gate, and should report `transport: "http"` through the same `gh_preflight` capability model introduced in #64 (see [docs/CAPABILITIES.md](CAPABILITIES.md)) rather than a new one.
