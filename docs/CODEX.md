@@ -95,4 +95,16 @@ Remote/hosted Codex runtimes do not expose a browser. Calling `gh_project_workfl
 
 ## Remote/hosted Codex
 
-Remote MCP transport and a deployment model that does not rely on a local source checkout are tracked in #60. That work must reuse the same server/domain implementation and pass the same `contracts/tools.json` parity gate, and should report `transport: "http"` through the same `gh_preflight` capability model introduced in #64 (see [docs/CAPABILITIES.md](CAPABILITIES.md)) rather than a new one.
+Hosted Codex and other remote MCP clients that cannot launch a local subprocess use the remote HTTP
+transport (`server-http.mjs`, #60) instead of the stdio path this document otherwise describes. It
+reuses the exact same server/domain implementation as stdio (`lib/server-factory.mjs`), passes the
+same `contracts/tools.json` parity gate (`test/http-transport.test.mjs` extends that check to the
+HTTP transport), and reports `transport: "http"` through the same `gh_preflight` capability model
+from #64 (see [docs/CAPABILITIES.md](CAPABILITIES.md)) rather than a new one. See
+[docs/DEPLOYMENT.md](DEPLOYMENT.md) for how to run it and [docs/BACKENDS.md](BACKENDS.md) for its
+per-request bearer-token identity model.
+
+Whether hosted Codex (or any other remote client) can actually *reach* a given deployment of this
+transport is a product-side configuration question for that client (registering the endpoint,
+allow-listing it through any egress proxy) — out of scope for this repository, which only implements
+and documents the transport itself.

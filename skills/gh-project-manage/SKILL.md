@@ -1,7 +1,7 @@
 ---
 name: gh-project-manage
 description: Manage GitHub Projects v2 through gh-projects-mcp across Claude, Codex, and other MCP clients. Use for project boards, fields, items, views, issues, PRs, sub-issues, status updates, audits, prioritization, and github.com users/orgs project URLs.
-version: 1.8.0
+version: 1.9.0
 ---
 
 # GitHub Projects Manager
@@ -119,6 +119,9 @@ The same server is intended to run in multiple clients:
 
 - Claude/local: stdio, usually `GhCliBackend` or direct API backend.
 - Codex/local: the same stdio server through the Codex plugin package.
-- Hosted/remote clients: future remote transport tracked by #60.
+- Hosted Codex / ChatGPT custom apps / other remote MCP clients: the remote HTTP transport
+  (`server-http.mjs`, #60) — same tool registrations, connected via the MCP SDK's Streamable
+  HTTP transport instead of stdio, and authenticated per request rather than by local process
+  identity. See `docs/DEPLOYMENT.md`.
 
 For shared capabilities, client choice must not change tool names, schemas, confirmation semantics, or resulting GitHub state. `contracts/tools.json` is the committed protocol contract and CI drift gate.

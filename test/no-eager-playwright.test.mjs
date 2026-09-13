@@ -34,6 +34,11 @@ test('server.mjs never statically imports playwright, view-groupby-ui.mjs, or to
 test('only the designated leaf module statically imports playwright', () => {
   const candidates = [
     'server.mjs',
+    'server-http.mjs',
+    'lib/server-factory.mjs',
+    'lib/http-transport.mjs',
+    'lib/request-context.mjs',
+    'lib/request-log.mjs',
     'lib/gql.mjs',
     'lib/github-backend.mjs',
     'lib/helpers.mjs',
