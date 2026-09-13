@@ -1,7 +1,7 @@
 ---
 name: gh-project-manage
 description: Manage GitHub Projects v2 through gh-projects-mcp across Claude, Codex, and other MCP clients. Use for project boards, fields, items, views, issues, PRs, sub-issues, status updates, audits, prioritization, and github.com users/orgs project URLs.
-version: 1.8.0
+version: 1.9.0
 ---
 
 # GitHub Projects Manager
