@@ -132,6 +132,26 @@ test('item add resolves issue URL node id before addProjectV2ItemById', () => {
   assert.deepEqual(backend.calls[1].variables.input, { projectId: 'P-o-1', contentId: 'ISSUE1' });
 });
 
+test('item add prefers the REST endpoint when the backend supports it, skipping GraphQL entirely', () => {
+  const calls = [];
+  const backend = {
+    kind: 'github-api',
+    itemAddRest(owner, number, opts) {
+      calls.push({ owner, number, opts });
+      return { id: 'PVTI_1', type: 'PULL_REQUEST', isArchived: false };
+    },
+  };
+  const compat = new ProjectApiCompat(backend);
+  const out = JSON.parse(compat.handle([
+    'project', 'item-add', '3', '--owner', 'EMBLEM-NLP', '--url', 'https://github.com/a/b/pull/7', '--format', 'json',
+  ]).stdout);
+  assert.deepEqual(out, { id: 'PVTI_1', type: 'PULL_REQUEST', isArchived: false });
+  assert.deepEqual(calls, [{
+    owner: 'EMBLEM-NLP', number: 3,
+    opts: { type: 'PullRequest', repoOwner: 'a', repo: 'b', itemNumber: 7 },
+  }]);
+});
+
 test('item field clear uses clearProjectV2ItemFieldValue', () => {
   const backend = backendStub([{ data: { clearProjectV2ItemFieldValue: { projectV2Item: { id: 'I1' } } } }]);
   const compat = new ProjectApiCompat(backend);

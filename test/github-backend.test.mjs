@@ -159,3 +159,29 @@ test('GitHubApiBackend fails closed for an unmigrated gh command', () => {
     /capability_unavailable/,
   );
 });
+
+test('GitHubApiBackend itemAddRest posts to the verified REST endpoint and normalizes the response', () => {
+  const request = requestStub([
+    { type: 'Organization' },
+    { node_id: 'PVTI_abc', content_type: 'PullRequest', archived_at: null },
+  ]);
+  const backend = new GitHubApiBackend({ token: 'secret', request });
+  const item = backend.itemAddRest('EMBLEM-NLP', 3, {
+    type: 'PullRequest', repoOwner: 'a', repo: 'b', itemNumber: 7,
+  });
+  assert.deepEqual(item, { id: 'PVTI_abc', type: 'PULL_REQUEST', isArchived: false });
+  assert.equal(request.calls[1].method, 'POST');
+  assert.equal(request.calls[1].url, 'https://api.github.com/orgs/EMBLEM-NLP/projectsV2/3/items');
+  assert.deepEqual(request.calls[1].body, { type: 'PullRequest', owner: 'a', repo: 'b', number: 7 });
+});
+
+test('GitHubApiBackend itemAddRest routes user-owned projects under /users/', () => {
+  const request = requestStub([
+    { type: 'User' },
+    { node_id: 'PVTI_xyz', content_type: 'Issue', archived_at: '2024-01-01T00:00:00Z' },
+  ]);
+  const backend = new GitHubApiBackend({ token: 'secret', request });
+  const item = backend.itemAddRest('octocat', 1, { type: 'Issue', repoOwner: 'a', repo: 'b', itemNumber: 2 });
+  assert.deepEqual(item, { id: 'PVTI_xyz', type: 'ISSUE', isArchived: true });
+  assert.equal(request.calls[1].url, 'https://api.github.com/users/octocat/projectsV2/1/items');
+});

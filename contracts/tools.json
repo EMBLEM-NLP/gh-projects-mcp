@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "server": "gh-projects-mcp",
-  "serverVersion": "1.8.0",
+  "serverVersion": "1.9.0",
   "toolCount": 44,
   "tools": [
     {
