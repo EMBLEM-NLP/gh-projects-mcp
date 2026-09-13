@@ -1,13 +1,15 @@
 {
   "name": "gh-projects-mcp",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "MCP server for managing GitHub Projects v2 (fields, items, views, sub-issues, status updates) across any repo/owner",
   "type": "module",
   "bin": {
-    "gh-projects-mcp": "./server.mjs"
+    "gh-projects-mcp": "./server.mjs",
+    "gh-projects-mcp-http": "./server-http.mjs"
   },
   "scripts": {
     "start": "node server.mjs",
+    "start:http": "node server-http.mjs",
     "test": "node scripts/run-tests.mjs",
     "lint": "eslint .",
     "contract:check": "node scripts/tool-contract.mjs check",
@@ -16,7 +18,7 @@
     "package:verify": "node scripts/client-package-contract.mjs"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "playwright": "^1.59.1",
     "zod": "^3.24.0"
   },

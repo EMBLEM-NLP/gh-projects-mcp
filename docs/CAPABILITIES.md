@@ -1,12 +1,13 @@
 # Runtime capability / preflight model
 
 `gh-projects-mcp` runs in several very different runtimes — a developer's Windows desktop, a Codex
-sandbox with no display, a hosted/containerized agent, and (once #60 lands) a remote HTTP
-deployment. Most of the server's tools are pure GitHub REST/GraphQL calls and work identically
-everywhere a backend is configured. A small number of tools (`gh_project_workflow_autoadd_configure`,
-and the optional `groupBy` input on `gh_project_view_create`/`gh_project_view_edit`) still depend on
-attaching to a locally running, already-logged-in Microsoft Edge over the Chrome DevTools Protocol
-(CDP) via Playwright — see `lib/cdp.mjs`, `lib/view-groupby-ui.mjs`, `lib/tools-workflows.mjs`.
+sandbox with no display, a hosted/containerized agent, and (via the remote HTTP transport, #60) a
+shared remote deployment serving many callers. Most of the server's tools are pure GitHub
+REST/GraphQL calls and work identically everywhere a backend is configured. A small number of tools
+(`gh_project_workflow_autoadd_configure`, and the optional `groupBy` input on
+`gh_project_view_create`/`gh_project_view_edit`) still depend on attaching to a locally running,
+already-logged-in Microsoft Edge over the Chrome DevTools Protocol (CDP) via Playwright — see
+`lib/cdp.mjs`, `lib/view-groupby-ui.mjs`, `lib/tools-workflows.mjs`.
 
 This document describes how the server reports and isolates that split.
 
@@ -95,7 +96,7 @@ for a Windows-hosted deployment that intentionally has no interactive Edge sessi
 | **Codex CLI/Desktop**, local checkout, any OS, `GH_PROJECTS_TOKEN` set | `stdio` | `github-api` | `ready` | `unavailable` on macOS/Linux; same as the Claude row above on Windows |
 | **Codex CLI/Desktop**, local checkout, no token, `gh` CLI signed in | `stdio` | `gh-cli` | `unknown`/`ready` per live probe | `unavailable` on macOS/Linux |
 | **Hosted Codex** (containerized, no desktop, no `gh` CLI) | `stdio` | `github-api` (token must be provided — `gh-cli` mode cannot work without a local `gh` binary) | `ready` once a token is configured, else `unavailable` | `unavailable` — every browser-ui tool call returns `capability_unavailable` immediately |
-| **Remote HTTP deployment** (tracked separately in #60 — not implemented by this issue) | `http` (once #60 lands) | `github-api` (a remote/multi-tenant deployment should not rely on a local `gh` CLI identity) | `ready` once a token/installation credential is configured | `unavailable` — no desktop Edge exists in that process either |
+| **Remote HTTP deployment** (`server-http.mjs`, #60) | `http` | `github-api` — every request supplies its own `Authorization: Bearer <token>` and gets a fresh, per-request backend (see docs/BACKENDS.md); the `gh-cli` backend is not reachable over this transport at all | `ready` once the caller's bearer token is valid; `unavailable` if the request had no/an invalid token (rejected with HTTP 401 before reaching any tool) | `unavailable` — no desktop Edge exists in that process either |
 | **CI** (this repo's own GitHub Actions, `ubuntu-latest`) | `stdio` | both `gh-cli` and `github-api` are exercised for contract parity (see `scripts/tool-contract.mjs`) | `github-api` row is `ready` with a placeholder/real token per job; `gh-cli` row is whatever the runner's `gh` auth state is | `unavailable` (Linux) |
 
 `*` "projects" here stands for both `projectsRead` and `projectsWrite`, which currently move together
@@ -104,12 +105,41 @@ with `graphql` (Projects v2 is a GraphQL-only API) — see `lib/runtime-capabili
 probe can turn each of `rest`/`graphql` (and therefore `issuePr`/`projectsRead`/`projectsWrite`)
 independently `ready` or `unavailable`.
 
-## What this issue does NOT implement
+## Remote HTTP transport (#60)
 
-- **Remote HTTP transport** (`transport: "http"`) is tracked separately in #60 and intentionally not
-  built here; the capability model's `transport` field is already generic so #60 only has to report
-  `"http"` rather than change this model's shape.
-- **A `mock` backend kind** is mentioned as a possible `backend` value in this issue's own example
+`server-http.mjs` connects the exact same `McpServer` (`lib/server-factory.mjs`'s `createMcpServer()`
+— identical tool registrations to stdio) to the MCP SDK's `StreamableHTTPServerTransport` instead of
+`StdioServerTransport`. It reports through this same capability model rather than a parallel one:
+`createMcpServer({ transport: 'http' })` threads the label into `registerPreflightTool`, so
+`gh_preflight` called over the HTTP transport reports `"transport": "http"` with no other change to
+the report's shape.
+
+What is different about the HTTP transport is backend *identity*, not the capability model itself:
+
+- Every request must carry `Authorization: Bearer <token>`; a missing/malformed header is rejected
+  with HTTP 401 before any MCP protocol or GitHub work happens.
+- That token becomes a **per-request** `GitHubApiBackend` (`lib/github-backend.mjs`), scoped to the
+  single request via `lib/request-context.mjs`'s `AsyncLocalStorage`-based `withRequestBackend` — it
+  is never stored, logged, or reused across requests, and concurrent requests on the same process
+  never see each other's backend (see `test/request-scoped-backend.test.mjs` and
+  `test/http-transport.test.mjs` for the isolation proof).
+- The `gh-cli` backend cannot be selected over this transport at all: a remote/shared process has no
+  single local, already-authenticated `gh` identity that would be safe to serve every caller with.
+- `GH_PROJECTS_HTTP_REQUIRE_AUTH=false` is a documented, explicit single-tenant escape hatch: every
+  request instead shares the one process-wide, env-configured backend (identical to the stdio
+  behavior). This is never the default and is only appropriate behind an operator's own
+  authenticating reverse proxy — see `docs/BACKENDS.md` and `docs/DEPLOYMENT.md`.
+
+See `docs/DEPLOYMENT.md` for the deployment model and `docs/BACKENDS.md` for the full per-request
+bearer-token design writeup, including its multi-tenant limits.
+
+## What this repository does NOT implement
+
+- **A `mock` backend kind** is mentioned as a possible `backend` value in the #64 issue's own example
   list but is not implemented — `lib/runtime-capabilities.mjs`'s `detectBackendConfig` already
   degrades any unrecognized backend kind (present or future, including a later `mock` backend) to
   `"unknown"` rather than throwing, so adding one later needs no capability-model change.
+- **Public hosting of the HTTP transport.** This repository implements, unit/integration-tests
+  (bound to `127.0.0.1` on an ephemeral port), and documents the transport; it does not provision or
+  operate any publicly reachable server. That deployment decision belongs to whoever operates a given
+  instance.

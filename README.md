@@ -1,6 +1,6 @@
 # gh-projects-mcp
 
-**Version 1.8.0**
+**Version 1.9.0**
 
 MCP server for managing [GitHub Projects v2](https://docs.github.com/en/issues/planning-and-tracking-with-projects) —
 fields, items, views, sub-issues, and status updates — from any repo, chat, or editor that speaks MCP
@@ -14,7 +14,8 @@ into every repo.
 
 GitHub Projects has a broad GraphQL/REST API, but client/runtime ergonomics still vary. This server
 provides one stable MCP contract over local `gh` CLI auth or direct GitHub API auth and preserves
-confirmation gates and ID-resolution rules across Claude, Codex, and future remote clients.
+confirmation gates and ID-resolution rules across Claude, Codex, and remote MCP clients (hosted
+Codex, ChatGPT custom apps, etc. — see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 
 Project view create/update/delete are now GraphQL-backed. The only view setting that still requires
 the existing logged-in Edge/CDP fallback is optional `groupBy`, because GitHub's current GraphQL
@@ -94,6 +95,21 @@ Or register it as an MCP server, e.g. in Claude Code:
 claude mcp add --scope user gh-projects -- node /path/to/gh-projects-mcp/server.mjs
 ```
 
+### Remote HTTP transport
+
+For hosted Codex, ChatGPT custom apps, and other remote MCP clients that cannot launch a local
+subprocess, run the same server over the MCP SDK's Streamable HTTP transport instead:
+
+```bash
+node server-http.mjs
+# gh-projects-mcp HTTP transport listening on http://127.0.0.1:3000/mcp (health check: http://127.0.0.1:3000/healthz)
+```
+
+It reuses the exact same tool registrations as `server.mjs` and requires a per-request
+`Authorization: Bearer <token>` by default. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the
+deployment model (container, reverse proxy, supported clients) and
+[docs/BACKENDS.md](docs/BACKENDS.md) for the per-request identity design.
+
 ## Bundled Skill + subagent
 
 This repo also ships the judgment layer that sits on top of the MCP tools:
@@ -118,7 +134,7 @@ cp .claude/agents/gh-project-manager.md ~/.claude/agents/
 
 Two broad GitHub Projects areas still need additional tooling: **Insights chart authoring** remains UI-driven, and project **workflow authoring beyond the covered Auto-add workflow** (for example auto-archive and other workflow types) remains UI-only apart from `deleteProjectV2Workflow`. `gh_project_workflow_autoadd_configure` covers Auto-add through the browser and verifies both repository and filter after save. View CRUD itself is API-backed; optional view `groupBy` still uses the isolated browser fallback. Iteration/sprint config and date-setting are API-backed and covered.
 
-Both remaining browser-only tools fail closed with a `capability_unavailable` error — and never import Playwright — on any runtime where the Edge/CDP fallback cannot possibly work (see [docs/CAPABILITIES.md](docs/CAPABILITIES.md)). Remote HTTP transport is tracked separately in #60.
+Both remaining browser-only tools fail closed with a `capability_unavailable` error — and never import Playwright — on any runtime where the Edge/CDP fallback cannot possibly work (see [docs/CAPABILITIES.md](docs/CAPABILITIES.md)). The remote HTTP transport (`server-http.mjs`, #60) is implemented and documented in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md); this repository does not itself provision or operate a publicly reachable deployment.
 
 ## License
 

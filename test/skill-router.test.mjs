@@ -17,6 +17,7 @@ function skillReferencedTools() {
 function registeredTools() {
   const files = [
     'server.mjs',
+    'lib/server-factory.mjs',
     'lib/tools-views-graphql.mjs',
     'lib/tools-pr.mjs',
     'lib/tools-issue-lifecycle.mjs',
