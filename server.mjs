@@ -44,7 +44,7 @@ async function safe(fn) {
 // pure, unit-tested helpers extracted into lib/helpers.mjs.
 const ownerRoot = makeOwnerRoot(gh);
 
-// ── Auth ────────────────────────────────────────────────────────────────────────────────────
+// ── Auth ─────────────────────────────────────────────────────────────────────
 
 server.tool(
   'gh_auth_status',
@@ -56,7 +56,7 @@ server.tool(
   }),
 );
 
-// ── Projects ──────────────────────────────────────────────────────────────────────────────────
+// ── Projects ─────────────────────────────────────────────────────────────────
 
 server.tool(
   'gh_project_list',
@@ -215,7 +215,7 @@ server.tool(
   }),
 );
 
-// ── Fields ──────────────────────────────────────────────────────────────────────────────────────
+// ── Fields ───────────────────────────────────────────────────────────────────
 
 server.tool(
   'gh_project_field_list',
@@ -305,7 +305,7 @@ server.tool(
   }),
 );
 
-// ── Items ───────────────────────────────────────────────────────────────────────────────────
+// ── Items ────────────────────────────────────────────────────────────────────
 
 server.tool(
   'gh_project_item_list',
@@ -495,7 +495,7 @@ server.tool(
   }),
 );
 
-// ── Issues & labels ───────────────────────────────────────────────────────
+// ── Issues & labels ──────────────────────────────────────────────────────────
 
 server.tool(
   'gh_issue_create',
@@ -559,7 +559,7 @@ server.tool(
   }),
 );
 
-// ── Sub-issues & status updates (GraphQL — no gh CLI subcommand exists) ───
+// ── Sub-issues & status updates (GraphQL — no gh CLI subcommand exists) ───────
 
 server.tool(
   'gh_subissue_link',
