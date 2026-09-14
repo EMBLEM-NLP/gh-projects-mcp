@@ -23,6 +23,10 @@ view mutation input exposes name/layout/filter/ordered visible fields but not gr
 
 ## Tools
 
+Summary below; for the full generated inventory (params, confirm-gated flags, capability
+requirements — kept in sync with the committed [`contracts/tools.json`](contracts/tools.json) via
+`npm run docs:tools`) see [docs/TOOL_INVENTORY.md](docs/TOOL_INVENTORY.md).
+
 | Tool | What it does |
 |---|---|
 | `gh_auth_status` | Check `gh` CLI auth + `project` scope |

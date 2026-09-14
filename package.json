@@ -15,7 +15,8 @@
     "contract:check": "node scripts/tool-contract.mjs check",
     "contract:write": "node scripts/tool-contract.mjs write",
     "contract:verify": "node scripts/tool-contract.mjs verify",
-    "package:verify": "node scripts/client-package-contract.mjs"
+    "package:verify": "node scripts/client-package-contract.mjs",
+    "docs:tools": "node scripts/render-tool-inventory.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
