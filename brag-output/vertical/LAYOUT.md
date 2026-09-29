@@ -11,7 +11,7 @@ Measured on a real story screenshot (1920-tall space): profile chip / progress b
 | Hero (numeral + headline) | 274 – 524 | |
 | Blue band | 552 – 628 | Scene label |
 | Content | 664 – ~1560 | Diagrams and rows, ~900 px tall (was ~700 in v3/v4) |
-| Footer rule + label | 1592 – ~1630 | Above the hearts |
-| Scene tab strip | 1712 – 1852 | 01–05 in gray, current scene cobalt; decorative, fine if covered |
+| Footer rule + takeaway line | 1596 – ~1640 | One README fact per scene (replaces the repeated 0N / 05 counter and tab strip); above the hearts |
+| Bottom reserved | 1663 – 1920 | Left empty; the reply bar and hearts fill it in the app |
 
 `safe-zone-check.jpg`: red shading marks y<145 and y>1663 on one frame per scene.
