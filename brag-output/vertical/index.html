@@ -63,6 +63,9 @@ html,body{width:1080px;height:1920px;background:var(--bg);overflow:hidden}
 .node.k{background:var(--amber);border-color:var(--amber);color:#000}.node.k i{color:#2b2000}
 .arrow{position:absolute;left:100px;font-size:28px;color:var(--amber);opacity:0;white-space:nowrap}
 .fw{position:absolute;left:790px;top:664px;width:220px;height:640px;border:3px dashed var(--red);opacity:0;padding:18px 14px;font-size:30px;color:#FF6A5F;line-height:1.25}
+
+.keys{position:absolute;left:70px;right:70px;top:1686px;height:112px;display:flex;gap:20px}
+.key{flex:1;border:3px solid var(--amberD);background:var(--panel);color:var(--grayL);display:flex;align-items:center;justify-content:center;font-size:29px;letter-spacing:1px}
 </style></head><body>
 <div id="root" data-composition-id="root" data-width="1080" data-height="1920" data-start="0" data-duration="20">
 <div class="frame"></div>
@@ -110,6 +113,7 @@ html,body{width:1080px;height:1920px;background:var(--bg);overflow:hidden}
 
 <div class="cmdline mono" id="cmdline"><span class="pr">[default]&gt;</span><span class="cst " id="cs1">go+ sequence 1</span><span class="cst " id="cs2">cd /</span><span class="cst " id="cr0">go+ sequence 1</span><span class="cst " id="cr1">selfix fixture 1 thru 10</span><span class="cst " id="cr2">preset 4.5</span><span class="cst " id="cr3">store cue 1 /merge</span><span class="cst " id="cr4">cd Group.1</span><span class="cst " id="cr5">goto cue 5 sequence 1</span><span class="cst red" id="cs4">blocked · nothing sent</span><span class="cst " id="cs5">uv run python -m src.server</span><span class="cur" id="cur"></span></div>
 
+<div class="keys mono"><div class="key" id="kr">SAFE_READ</div><div class="key" id="kw">SAFE_WRITE</div><div class="key" id="kd">DESTRUCTIVE</div></div>
 <audio id="music" data-timeline-role="music" data-start="0" data-duration="20" data-volume="1" data-fade-out="1.5" src="assets/music/song-cut.mp3"></audio>
 
 <script src="assets/gsap.min.js"></script>
@@ -158,6 +162,17 @@ pop("#n1",G(39)); tl.fromTo("#a1",{opacity:0},{opacity:1,duration:.15},G(39)+0.2
 pop("#n2",G(40)); tl.fromTo("#a2",{opacity:0},{opacity:1,duration:.15},G(40)+0.25);
 pop("#n3",G(41)); tl.fromTo("#fw",{opacity:0},{opacity:1,duration:.2},G(41)+0.2);
 pop("#url5",G(42),.18); pop("#c5",G(43),.18);
+
+// risk-tier key caps mirror the command on the command line
+const KEY={r:{bg:"#5F5E5C",c:"#FFFFFF",b:"#AD7F00"},w:{bg:"#00008C",c:"#FFFFFF",b:"#FEC000"},d:{bg:"#DA251C",c:"#FFFFFF",b:"#FF6A5F"}};
+const OFF={bg:"#0B0A06",c:"#99958B",b:"#936B00"};
+const lit=(k,t0,t1)=>{const id="#k"+k;
+  tl.set(id,{backgroundColor:KEY[k].bg,color:KEY[k].c,borderColor:KEY[k].b},t0);
+  tl.set(id,{backgroundColor:OFF.bg,color:OFF.c,borderColor:OFF.b},t1);};
+lit("w",G(5),DROP);            // go+ sequence 1  -> Go = SAFE_WRITE
+lit("r",G(11),G(19));          // cd /            -> ChangeDest = SAFE_READ
+["w","w","w","d","r","w"].forEach((k,i)=>lit(k,G(20+i),i<5?G(21+i):G(31)));  // builder rows
+lit("d",G(34),G(39));          // delete_object   -> DESTRUCTIVE
 window.__timelines = window.__timelines || {};
 window.__timelines["root"] = tl;
 </script>
