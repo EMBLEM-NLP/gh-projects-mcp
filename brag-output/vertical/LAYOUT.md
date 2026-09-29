@@ -1,16 +1,20 @@
-# Vertical layout: story-safe composition (1080 x 1920)
+# Vertical layout v4: full-bleed border, overlay-aware (1080 x 1920)
 
-Problem: in Instagram Stories the profile chip / progress bar cover the top of the frame, and the reply bar, floating hearts and Activity row cover the bottom. The old layout put the GRANDPA2-BUDDY header at y=70 and the page footer at y=1850, both under those overlays.
+Problem: Instagram Stories cover the top of the frame (profile chip, progress bar) and the bottom (reply bar, floating hearts). v1 put the brand header and footer under them; v3 fixed that by shrinking the design into a card, which left large blank margins.
 
-Measured on a real screenshot (1920-tall space): top overlay reaches y≈145, floating hearts start y≈1663, reply bar y≈1810+. Devices differ, so the design uses a wider margin.
+Measured on a real screenshot (1920-tall space): top overlay to y≈145, hearts start y≈1663, reply bar y≈1810+.
 
-| Zone | y range | Rule |
+Fix: keep the full-bleed border and fill the reserved zones with dense, non-informational graphics.
+
+| Zone | y range | Content |
 |---|---|---|
-| Top reserved | 0 – 250 | Ivory only. No text, no logos. |
-| Safe card | 250 – 1535 | Everything readable lives here (the bordered card). |
-| Bottom reserved | 1535 – 1920 | Ivory only. Room for reply bar and hearts. |
-| Side margin | 70 px each side inside the card | Keeps text clear of edge UI. |
+| Top band | 33 – 235 | Solid black; 46-tick beat ruler, one tick per song beat, lights cobalt and pops on its beat |
+| Header | 252 – 314 | GRANDPA2-BUDDY brand row (clear of the profile chip) |
+| Hero | 352 – 602 | Big numeral + headline |
+| Blue band | 644 – 714 | Scene label |
+| Content | 738 – ~1550 | Diagrams / rows (all readable text) |
+| Footer | 1578 | CODE / METHOD / RESULT, page x / 5 |
+| Bottom band | 1650 – 1887 | Solid black; mirrored beat ruler + 5 scene-progress segments |
 
-Inside the card: header 272–338 · hero (numeral + headline) 376–626 · blue band 656–726 · content 748–1450 · footer rule 1466.
-
-`safe-zone-check.jpg` overlays the reserved zones in red on a frame from every scene; nothing sits in a red band.
+Only decorative elements enter the top and bottom bands, so app overlays covering them cost nothing.
+`safe-zone-check.jpg` shades y<145 and y>1663 red on one frame from each scene.
