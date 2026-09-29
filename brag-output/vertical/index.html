@@ -1,5 +1,5 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>GrandPA2-Buddy vertical remix</title>
+<html><head><meta charset="utf-8"><title>GrandPA2-Buddy vertical remix v2</title>
 <style>
 @font-face{font-family:"Barlow Condensed";font-weight:800;src:url(assets/fonts/barlow-condensed-latin-800-normal.woff2)}
 @font-face{font-family:"Barlow Condensed";font-weight:700;src:url(assets/fonts/barlow-condensed-latin-700-normal.woff2)}
@@ -19,82 +19,98 @@ html,body{width:1080px;height:1920px;background:var(--bg);overflow:hidden}
 .scene{position:absolute;inset:0;opacity:0}
 .hero{position:absolute;left:70px;right:70px;top:225px;height:440px;display:flex;gap:30px;align-items:flex-start}
 .num{font-size:470px;line-height:.82;color:var(--blue);letter-spacing:-8px}
-.head{white-space:nowrap;font-size:190px;line-height:.86;letter-spacing:-3px;padding-top:14px}
-.band{position:absolute;left:70px;right:70px;top:690px;height:90px;background:var(--blue);color:#fff;font-size:52px;display:flex;align-items:center;padding:0 24px;text-transform:uppercase;font-weight:700;font-family:"Barlow Condensed"}
-.rows{position:absolute;left:70px;right:70px;top:820px}
-.row{height:170px;border-top:3px solid var(--fg);display:flex;align-items:center;gap:28px;padding-right:0;opacity:0}
-.row .n{font-size:100px;color:var(--mute);width:120px;border-right:3px solid var(--fg);line-height:1}
-.row .t{flex:1}
-.row .t b{display:block;font-family:"Barlow Condensed";font-weight:700;font-size:62px;line-height:1;white-space:nowrap}
-.row .t i{display:inline-block;font-style:normal;font-size:32px;background:var(--chip);padding:4px 14px;margin-top:8px}
-.chip{width:270px;height:112px;display:flex;align-items:center;justify-content:center;font-size:66px;color:#fff;background:var(--red)}
-.chip.ok{background:var(--blue)}
-.row.hl{background:var(--blue);color:#fff}
-.row.hl .n{color:#fff;border-color:#fff}.row.hl .t i{background:rgba(255,255,255,.18)}
-.row.hl .chip{background:#fff;color:var(--blue)}
-.cap{position:absolute;left:70px;right:70px;top:1700px;font-size:76px;line-height:.95;opacity:0}
-.cap.b{color:var(--blue)}
-.big{position:absolute;left:70px;right:70px;top:800px;text-align:left}
+.head{white-space:nowrap;font-size:150px;line-height:.86;letter-spacing:-3px;padding-top:14px}
+.band{position:absolute;left:70px;right:70px;top:690px;height:90px;background:var(--blue);color:#fff;font-size:50px;display:flex;align-items:center;padding:0 24px;text-transform:uppercase;font-weight:700;font-family:"Barlow Condensed";white-space:nowrap}
+.cap{position:absolute;left:70px;right:70px;font-size:64px;line-height:.95;opacity:0;color:var(--blue)}
+.n{color:var(--mute);border-right:3px solid var(--fg);line-height:1}
+/* scene 1 prompt */
+.prompt{position:absolute;left:70px;right:70px;top:1470px;height:170px;background:var(--fg);color:#fff;font-size:54px;display:flex;align-items:center;padding:0 40px;white-space:nowrap}
+.prompt b{color:#8fa6ff;font-weight:500;margin-right:26px}
+.prompt em{display:inline-block;width:26px;height:56px;background:var(--blue);margin-left:6px;font-style:normal}
+/* scene 2 layers */
+.layers{position:absolute;left:70px;right:70px;top:810px}
+.layer{height:138px;border:3px solid var(--fg);margin-bottom:28px;display:flex;align-items:center;gap:26px;padding-left:20px;opacity:0;position:relative}
+.layer::after{content:"▼";position:absolute;left:50%;bottom:-31px;font-size:22px;color:var(--blue);line-height:1;transform:translateX(-50%)}
+.layer.l5::after{display:none}
+.layer .n{font-size:76px;width:96px;height:96px;display:flex;align-items:center}
+.layer .t b{display:block;font-size:66px;line-height:1;font-weight:700}
+.layer .t i{display:block;font-style:normal;font-size:28px;margin-top:6px;color:var(--mute)}
+.layer.l1{background:var(--blue);color:#fff}.layer.l1 .n{color:#fff;border-color:#fff}.layer.l1 .t i{color:#d5deff}.layer.l1::after{color:var(--fg)}
+.layer.l5{background:var(--fg);color:#fff}.layer.l5 .n{color:#fff;border-color:#fff}.layer.l5 .t i{color:#c9cbd2}
+/* scene 3 rows */
+.crows{position:absolute;left:70px;right:70px;top:810px}
+.crow{height:146px;border-top:3px solid var(--fg);display:flex;align-items:center;gap:24px;opacity:0}
+.crow .n{font-size:84px;width:96px;height:100px;display:flex;align-items:center}
+.crow .t{flex:1}
+.crow .fn{font-size:30px;color:var(--mute);white-space:nowrap}
+.crow .out{font-size:37px;color:var(--blue);margin-top:8px;white-space:nowrap}
+.tier{width:236px;height:58px;font-size:25px;display:flex;align-items:center;justify-content:center;color:#fff}
+.tier.w{background:var(--blue)}.tier.r{background:var(--mute)}.tier.d{background:var(--red)}
+/* scene 4 ladder */
+.ladder{position:absolute;left:70px;right:70px;top:810px}
+.bar{height:74px;margin-bottom:12px;background:var(--mute);color:#fff;font-size:34px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;opacity:0;transform-origin:0 50%}
+.b0{width:520px}.b1{width:590px}.b2{width:660px}.b3{width:740px}.b4{width:830px}.b5{width:940px;background:var(--blue)}
+.formula{position:absolute;left:70px;right:70px;top:1360px;font-size:33px;border-top:3px solid var(--fg);padding-top:14px;opacity:0;white-space:nowrap}
+.block{position:absolute;left:70px;right:70px;top:1440px;height:290px;background:var(--fg);border-left:24px solid var(--red);color:#fff;padding:26px 30px;opacity:0;font-size:32px;line-height:1.5}
+.block .x{color:#ff8d8d}
+.block .rej{position:absolute;right:26px;top:26px;width:210px;height:74px;background:var(--red);font-size:50px;display:flex;align-items:center;justify-content:center;font-family:"Barlow Condensed";font-weight:800}
+/* scene 5 flow */
+.node{position:absolute;left:70px;width:700px;height:130px;border:3px solid var(--fg);padding:16px 26px;opacity:0}
+.node b{display:block;font-size:62px;line-height:1;font-weight:800}
+.node i{display:block;font-style:normal;font-size:27px;margin-top:6px;color:var(--mute)}
+.node.k{background:var(--fg);color:#fff}.node.k i{color:#c9cbd2}
+.node.k1{background:var(--blue);color:#fff}.node.k1 i{color:#d5deff}
+.arrow{position:absolute;left:100px;font-size:27px;color:var(--blue);opacity:0;white-space:nowrap}
+.fw{position:absolute;left:800px;top:832px;width:210px;height:500px;border:3px dashed var(--red);opacity:0;padding:20px 16px;font-size:30px;color:var(--red);line-height:1.2}
 </style></head><body>
 <div id="root" data-composition-id="root" data-width="1080" data-height="1920" data-start="0" data-duration="20">
 <div class="frame"></div>
 <div class="hdr"><b class="cond">GRANDPA2-BUDDY</b><span class="mono">grandMA2 agent harness</span></div>
 
 <div id="s1" class="scene">
-  <div class="hero" style="top:230px;height:1300px;flex-direction:column;gap:0">
+  <div class="hero" style="top:230px;height:1000px;flex-direction:column;gap:0">
     <div class="num cond kick" style="font-size:520px">01</div>
-    <div class="head cond" style="font-size:190px;margin-top:20px;width:940px;white-space:nowrap"><div id="h1a" style="opacity:0">What if</div><div id="h1b" style="opacity:0">your lighting</div><div id="h1c" style="opacity:0">console</div><div id="h1d" style="opacity:0;color:var(--blue)">could listen?</div></div>
+    <div class="head cond" style="font-size:190px;margin-top:20px;width:940px"><div id="h1a" style="opacity:0">What if</div><div id="h1b" style="opacity:0">your lighting</div><div id="h1c" style="opacity:0">console</div><div id="h1d" style="opacity:0;color:var(--blue)">could listen?</div></div>
   </div>
+  <div class="prompt mono" id="pr" style="opacity:0"><b>[default]&gt;</b><span id="ptxt"></span><em></em></div>
   <div class="ftr mono"><span>CODE / METHOD / RESULT</span><span>01 / 05</span></div>
 </div>
 
 <div id="s2" class="scene">
-  <div class="hero"><div class="num cond kick">02</div><div class="head cond" style="font-size:150px">One<br>harness.</div></div>
+  <div class="hero"><div class="num cond kick">02</div><div class="head cond" style="font-size:128px"><span id="cnt">0</span> tools.<br>Five layers.</div></div>
   <div class="band" id="b2">MCP tools · grandMA2 · Telnet</div>
-  <div class="cond" id="cnt" style="position:absolute;left:60px;top:810px;height:480px;font-size:440px;line-height:1;color:var(--fg);letter-spacing:-10px">0</div>
-  <div class="rows" style="top:1310px">
-    <div class="row" style="height:120px"><div class="n cond" style="font-size:70px;width:90px">01</div><div class="t"><b>Playback</b></div></div>
-    <div class="row" style="height:120px"><div class="n cond" style="font-size:70px;width:90px">02</div><div class="t"><b>Programming</b></div></div>
-    <div class="row" style="height:120px"><div class="n cond" style="font-size:70px;width:90px">03</div><div class="t"><b>User management</b></div></div>
-  </div>
-  <div class="cap cond b" id="c2" style="top:1730px;font-size:64px">Every grandMA2 operation.</div>
+  <div class="layers"><div class="layer l1"><div class="n cond">01</div><div class="t"><b class="cond">Agent Core</b><i class="mono">orchestrator · memory · skills</i></div></div><div class="layer "><div class="n cond">02</div><div class="t"><b class="cond">MCP Server</b><i class="mono">src/server.py · safety gate</i></div></div><div class="layer "><div class="n cond">03</div><div class="t"><b class="cond">Navigation</b><i class="mono">src/navigation.py · cd · list · scan</i></div></div><div class="layer "><div class="n cond">04</div><div class="t"><b class="cond">Command Builders</b><i class="mono">254 pure functions → strings</i></div></div><div class="layer l5"><div class="n cond">05</div><div class="t"><b class="cond">Telnet Client</b><i class="mono">async · auth · injection prevention</i></div></div></div>
+  <div class="cap cond" id="c2" style="top:1690px;font-size:60px">All network I/O lives in one file.</div>
   <div class="ftr mono"><span>CODE / METHOD / RESULT</span><span>02 / 05</span></div>
 </div>
 
 <div id="s3" class="scene">
-  <div class="hero"><div class="num cond kick">03</div><div class="head cond" style="font-size:150px">Goal in.<br>Steps<br>checked.</div></div>
-  <div class="band">run_agent_goal · classify → trace</div>
-  <div class="rows" id="rows3" style="top:810px">
-    <div class="row" style="height:135px"><div class="n cond" style="font-size:84px;width:110px">01</div><div class="t"><b>classify</b></div><div class="chip ok cond" style="height:90px;width:230px">PASS</div></div>
-    <div class="row" style="height:135px"><div class="n cond" style="font-size:84px;width:110px">02</div><div class="t"><b>plan</b></div><div class="chip ok cond" style="height:90px;width:230px">PASS</div></div>
-    <div class="row" style="height:135px"><div class="n cond" style="font-size:84px;width:110px">03</div><div class="t"><b>validate</b></div><div class="chip ok cond" style="height:90px;width:230px">PASS</div></div>
-    <div class="row" style="height:135px"><div class="n cond" style="font-size:84px;width:110px">04</div><div class="t"><b>execute</b></div><div class="chip ok cond" style="height:90px;width:230px">PASS</div></div>
-    <div class="row" style="height:135px"><div class="n cond" style="font-size:84px;width:110px">05</div><div class="t"><b>verify</b></div><div class="chip ok cond" style="height:90px;width:230px">PASS</div></div>
-    <div class="row hl" style="height:135px"><div class="n cond" style="font-size:84px;width:110px">06</div><div class="t"><b>trace</b></div><div class="chip cond" style="height:90px;width:230px">PASS</div></div>
-  </div>
-  <div class="cap cond b" id="c3">Plan. Execute. Verify. Trace.</div>
+  <div class="hero"><div class="num cond kick">03</div><div class="head cond" style="font-size:138px">Code in.<br>Command<br>out.</div></div>
+  <div class="band">Real builder output · risk tier</div>
+  <div class="crows"><div class="crow"><div class="n cond">01</div><div class="t"><div class="fn mono">go_sequence(1)</div><div class="out mono">→ go+ sequence 1</div></div><div class="tier mono w">SAFE_WRITE</div></div><div class="crow"><div class="n cond">02</div><div class="t"><div class="fn mono">select_fixture(1, 10)</div><div class="out mono">→ selfix fixture 1 thru 10</div></div><div class="tier mono w">SAFE_WRITE</div></div><div class="crow"><div class="n cond">03</div><div class="t"><div class="fn mono">preset(&quot;color&quot;, 5)</div><div class="out mono">→ preset 4.5</div></div><div class="tier mono w">SAFE_WRITE</div></div><div class="crow"><div class="n cond">04</div><div class="t"><div class="fn mono">store_cue(1, merge=True)</div><div class="out mono">→ store cue 1 /merge</div></div><div class="tier mono d">DESTRUCTIVE</div></div><div class="crow"><div class="n cond">05</div><div class="t"><div class="fn mono">changedest(&quot;Group&quot;, 1)</div><div class="out mono">→ cd Group.1</div></div><div class="tier mono r">SAFE_READ</div></div><div class="crow"><div class="n cond">06</div><div class="t"><div class="fn mono">goto_cue(1, 5)</div><div class="out mono">→ goto cue 5 sequence 1</div></div><div class="tier mono w">SAFE_WRITE</div></div></div>
   <div class="ftr mono"><span>CODE / METHOD / RESULT</span><span>03 / 05</span></div>
 </div>
 
 <div id="s4" class="scene">
-  <div class="hero"><div class="num cond kick">04</div><div class="head cond" style="font-size:135px">Three<br>layers.<br>One veto.</div></div>
-  <div class="band">Condition explained · alternative cases</div>
-  <div class="rows">
-    <div class="row"><div class="n cond">01</div><div class="t"><b>OAuth scope</b><i class="mono">scope ✓</i></div><div class="chip ok cond">PASS</div></div>
-    <div class="row"><div class="n cond">02</div><div class="t"><b>MA2 native rights</b><i class="mono">rights ✓</i></div><div class="chip ok cond">PASS</div></div>
-    <div class="row"><div class="n cond">03</div><div class="t"><b>Console floor</b><i class="mono">floor ✓</i></div><div class="chip ok cond">PASS</div></div>
-    <div class="row"><div class="n cond">04</div><div class="t"><b>Line-break injection</b><i class="mono">"\r\n"</i></div><div class="chip cond">REJECT</div></div>
-  </div>
-  <div class="cap cond b" id="c4" style="top:1560px">All three must agree.</div>
+  <div class="hero"><div class="num cond kick">04</div><div class="head cond" style="font-size:135px">Six tiers.<br>One veto.</div></div>
+  <div class="band" style="font-size:44px">scope ∩ ma2_rights ∩ console_floor</div>
+  <div class="ladder"><div class="bar mono b0"><span>tier:0</span><span>guest</span></div><div class="bar mono b1"><span>tier:1</span><span>operator</span></div><div class="bar mono b2"><span>tier:2</span><span>presets_editor</span></div><div class="bar mono b3"><span>tier:3</span><span>programmer</span></div><div class="bar mono b4"><span>tier:4</span><span>tech_director</span></div><div class="bar mono b5"><span>tier:5</span><span>administrator</span></div></div>
+  <div class="formula mono" id="fm">= FINAL AUTHORITY</div>
+  <div class="block mono" id="blk"><div class="rej">REJECT</div>session&nbsp;&nbsp;tier:1 · operator<br>tool&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delete_object<br><span class="x">{"blocked": True,<br>&nbsp;"required_ma2_right": "program"}</span></div>
   <div class="ftr mono"><span>CODE / METHOD / RESULT</span><span>04 / 05</span></div>
 </div>
 
 <div id="s5" class="scene">
-  <div class="hero"><div class="num cond kick" style="font-size:420px">05</div><div class="head cond" style="font-size:180px">3,705<br>tests.</div></div>
-  <div class="band" id="b5">Before it touches your rig</div>
-  <div class="big cond" id="pass5" style="opacity:0;top:830px"><div style="background:var(--blue);color:#fff;font-size:340px;line-height:1;padding:30px 40px;display:inline-block">PASS</div></div>
-  <div class="cond" id="url5" style="position:absolute;left:70px;right:70px;top:1330px;background:var(--blue);color:#fff;font-size:47px;padding:26px 30px;opacity:0;font-weight:800;white-space:nowrap">github.com/thisis-romar/ma2-onPC-MCP</div>
-  <div class="cap cond" id="c5" style="top:1560px;font-size:110px;line-height:.9">Let the lights listen.</div>
+  <div class="hero"><div class="num cond kick" style="font-size:420px">05</div><div class="head cond" style="font-size:180px">3,700+<br>tests.</div></div>
+  <div class="band">Loopback only. Nothing else gets in.</div>
+  <div class="node" id="n1" style="top:810px"><b class="cond">LLM Client</b><i class="mono">Claude Desktop · VS Code</i></div>
+  <div class="arrow mono" id="a1" style="top:952px">▼ stdio</div>
+  <div class="node k1" id="n2" style="top:1000px"><b class="cond">MCP Server</b><i class="mono">src/server.py · 3-layer gate</i></div>
+  <div class="arrow mono" id="a2" style="top:1142px">▼ localhost:30000 · Telnet</div>
+  <div class="node k" id="n3" style="top:1190px"><b class="cond">grandMA2 onPC</b><i class="mono">same machine</i></div>
+  <div class="fw mono" id="fw">firewall:<br>TCP 30000<br>loopback<br>only</div>
+  <div class="cond" id="url5" style="position:absolute;left:70px;right:70px;top:1420px;background:var(--blue);color:#fff;font-size:47px;padding:26px 30px;opacity:0;white-space:nowrap">github.com/thisis-romar/ma2-onPC-MCP</div>
+  <div class="cap cond" id="c5" style="top:1590px;font-size:110px;line-height:.9;color:var(--fg)">Let the lights <span style="color:var(--blue)">listen.</span></div>
   <div class="ftr mono"><span>CODE / METHOD / RESULT</span><span>05 / 05</span></div>
 </div>
 
@@ -103,33 +119,38 @@ html,body{width:1080px;height:1920px;background:var(--bg);overflow:hidden}
 <script src="assets/gsap.min.js"></script>
 <script>
 const tl = gsap.timeline({ paused: true });
-const G = n => 0.397 + 0.4317 * n;      // detected beat grid (139 BPM), t = 0 is excerpt start
+const G = n => 0.397 + 0.4317 * n;
 const show=(id,s,e)=>{tl.set(id,{opacity:1},s);tl.set(id,{opacity:0},e);};
 const DROP=4.07;
 const B={s1:[0,DROP],s2:[DROP,G(19)],s3:[G(19),G(31)],s4:[G(31),G(39)],s5:[G(39),20]};
 Object.entries(B).forEach(([k,[s,e]])=>show("#"+k,s,e));
-const pop=(sel,t,d=.18)=>tl.fromTo(sel,{opacity:0,y:50},{opacity:1,y:0,duration:d,ease:"power3.out"},t);
-// beat kick on the giant numerals
+const pop=(sel,t,d=.18,y=40)=>tl.fromTo(sel,{opacity:0,y},{opacity:1,y:0,duration:d,ease:"power3.out"},t);
 document.querySelectorAll(".kick").forEach(el=>{
-  const sc=el.closest(".scene").id, [s,e]=B[sc];
+  const [s,e]=B[el.closest(".scene").id];
   for(let n=0;G(n)<e;n++){ if(G(n)>=s) tl.fromTo(el,{scale:1.06},{scale:1,duration:.28,ease:"power2.out",transformOrigin:"0 0"},G(n)); }
 });
-// S1: hook words slam on beats 0,2,4,6
+// S1: hook words on beats 0,2,4,6 + console prompt typing go+ sequence 1 over beats 5-8
 ["#h1a","#h1b","#h1c","#h1d"].forEach((id,i)=>pop(id,G(i*2),.16));
-// S2: count 0 -> 210 on the drop, rows on beats
+const cmd="go+ sequence 1", o={n:0};
+tl.set("#pr",{opacity:1},G(5));
+tl.to(o,{n:cmd.length,duration:G(8)-G(5),ease:"none",onUpdate(){document.getElementById("ptxt").textContent=cmd.slice(0,Math.round(o.n));}},G(5));
+// S2: counter on the drop, layers one per beat
 const c={v:0};
 tl.to(c,{v:210,duration:1.3,ease:"power3.out",onUpdate(){document.getElementById("cnt").textContent=Math.round(c.v);}},DROP);
 tl.from("#b2",{opacity:0,duration:.2},DROP+0.1);
-document.querySelectorAll("#s2 .row").forEach((r,i)=>pop(r,G(11+i*2)));
+document.querySelectorAll("#s2 .layer").forEach((r,i)=>pop(r,G(11+i)));
 tl.fromTo("#c2",{opacity:0,y:30},{opacity:1,y:0,duration:.2},G(16));
-// S3: rows one per beat, caption at the end
-document.querySelectorAll("#s3 .row").forEach((r,i)=>pop(r,G(20+i)));
-tl.fromTo("#c3",{opacity:0,y:30},{opacity:1,y:0,duration:.2},G(27));
-// S4: rows on beats, REJECT last
-document.querySelectorAll("#s4 .row").forEach((r,i)=>pop(r,G(31+i)));
-tl.fromTo("#c4",{opacity:0,y:30},{opacity:1,y:0,duration:.2},G(35));
-// S5
-pop("#pass5",G(41),.14); pop("#url5",G(43),.18); pop("#c5",G(45)-0.1,.18);
+// S3: rows one per beat
+document.querySelectorAll("#s3 .crow").forEach((r,i)=>pop(r,G(20+i)));
+// S4: ladder two bars per beat, formula, then the blocked card
+document.querySelectorAll("#s4 .bar").forEach((r,i)=>{const t0=G(31+Math.floor(i/2))+(i%2)*0.2; tl.set(r,{opacity:1},t0); tl.fromTo(r,{scaleX:.2},{scaleX:1,duration:.2,ease:"power3.out"},t0);});
+tl.fromTo("#fm",{opacity:0},{opacity:1,duration:.2},G(33)+0.25);
+pop("#blk",G(34),.16);
+// S5: flow, one node per beat, then URL and caption
+pop("#n1",G(39)); tl.fromTo("#a1",{opacity:0},{opacity:1,duration:.15},G(39)+0.25);
+pop("#n2",G(40)); tl.fromTo("#a2",{opacity:0},{opacity:1,duration:.15},G(40)+0.25);
+pop("#n3",G(41)); tl.fromTo("#fw",{opacity:0},{opacity:1,duration:.2},G(41)+0.2);
+pop("#url5",G(42),.18); pop("#c5",G(43),.18);
 window.__timelines = window.__timelines || {};
 window.__timelines["root"] = tl;
 </script>
