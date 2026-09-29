@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>GrandPA2-Buddy remix vertical, version française</title>
+<style>
+@font-face{font-family:"Barlow Condensed";font-weight:800;src:url(assets/fonts/barlow-condensed-latin-800-normal.woff2)}
+@font-face{font-family:"Barlow Condensed";font-weight:700;src:url(assets/fonts/barlow-condensed-latin-700-normal.woff2)}
+@font-face{font-family:"IBM Plex Sans";font-weight:400;src:url(assets/fonts/ibm-plex-sans-latin-400-normal.woff2)}
+@font-face{font-family:"IBM Plex Mono";font-weight:500;src:url(assets/fonts/ibm-plex-mono-latin-500-normal.woff2)}
+*{margin:0;padding:0;box-sizing:border-box}
+/* palette sampled from grandMA2 onPC screenshots in the user manual */
+:root{--bg:#000000;--tx:#FFFFFF;--amber:#FEC000;--amberD:#936B00;--amberM:#AD7F00;--blue:#00008C;--blueB:#0000FE;--red:#DA251C;--gray:#5F5E5C;--grayL:#99958B;--panel:#0B0A06}
+html,body{width:1080px;height:1920px;background:var(--bg);overflow:hidden}
+#root{position:relative;width:1080px;height:1920px;background:var(--bg);color:var(--tx);font-family:"IBM Plex Sans",sans-serif}
+.frame{position:absolute;inset:30px;border:3px solid var(--amberD)}
+.cond{font-family:"Barlow Condensed",sans-serif;font-weight:800}
+.mono{font-family:"IBM Plex Mono",monospace;font-weight:500}
+.hdr{position:absolute;left:33px;right:33px;top:172px;height:68px;background:var(--blue);display:flex;align-items:center;gap:22px;padding:0 37px}
+.hdr b{font-size:48px;line-height:1;color:var(--tx)}
+.hdr span{font-size:22px;letter-spacing:3px;color:var(--amber);text-transform:uppercase}
+.scene{position:absolute;inset:0;opacity:0}
+.hero{position:absolute;left:70px;right:70px;top:274px;height:250px;display:flex;gap:24px;align-items:flex-start}
+.num{font-size:250px;line-height:240px;height:240px;color:var(--amber);letter-spacing:-5px}
+.head{white-space:nowrap;font-size:128px;line-height:.86;letter-spacing:-2px;padding-top:16px;color:var(--tx)}
+.band{position:absolute;left:70px;right:70px;top:552px;height:76px;background:var(--blue);color:var(--tx);font-size:44px;display:flex;align-items:center;padding:0 22px;text-transform:uppercase;font-weight:700;font-family:"Barlow Condensed";white-space:nowrap;border:2px solid var(--amberD)}
+.n{color:var(--grayL);border-right:3px solid var(--amberD);line-height:1}
+/* command line (persistent, like the grandMA2 bottom command line) */
+.cmdline{position:absolute;left:70px;right:70px;top:1566px;height:92px;border:3px solid var(--amber);background:var(--bg);display:flex;align-items:center;padding:0 24px;font-size:32px;white-space:nowrap}
+.cmdline .pr{color:var(--amberM);margin-right:16px}
+.cmdline .cst{position:absolute;left:236px;opacity:0;color:var(--tx)}
+.cmdline .cst.red{color:#FF5A4F}
+.cmdline .cur{position:absolute;right:24px;width:22px;height:46px;background:var(--amber)}
+/* scene 2 layers */
+.layers{position:absolute;left:70px;right:70px;top:664px}
+.layer{height:148px;border:3px solid var(--amberD);margin-bottom:30px;display:flex;align-items:center;gap:24px;padding-left:20px;opacity:0;position:relative;background:var(--panel)}
+.layer::after{content:"▼";position:absolute;left:50%;bottom:-32px;font-size:22px;color:var(--amber);line-height:1;transform:translateX(-50%)}
+.layer.l5::after{display:none}
+.layer .n{font-size:80px;width:100px;height:100px;display:flex;align-items:center}
+.layer .t b{display:block;font-size:72px;line-height:1;font-weight:700;color:var(--tx)}
+.layer .t i{display:block;font-style:normal;font-size:29px;margin-top:6px;color:var(--grayL)}
+.layer.l1{background:var(--blue);border-color:var(--amber)}.layer.l1 .n{color:var(--amber);border-color:var(--amber)}.layer.l1 .t i{color:#C9CCFF}
+.layer.l5{background:var(--amber);border-color:var(--amber)}.layer.l5 .n{color:#000;border-color:#000}.layer.l5 .t b{color:#000}.layer.l5 .t i{color:#2b2000}
+/* scene 3 rows */
+.crows{position:absolute;left:70px;right:70px;top:664px}
+.crow{height:144px;border-top:3px solid var(--amberD);display:flex;align-items:center;gap:22px;opacity:0}
+.crow .n{font-size:80px;width:96px;height:100px;display:flex;align-items:center}
+.crow .t{flex:1}
+.crow .fn{font-size:31px;color:var(--grayL);white-space:nowrap}
+.crow .out{font-size:35px;color:var(--amber);margin-top:7px;white-space:nowrap}
+.tier{width:218px;height:56px;font-size:24px;display:flex;align-items:center;justify-content:center;color:#fff}
+.tier.w{background:var(--blue);border:2px solid var(--amberM)}.tier.r{background:var(--gray)}.tier.d{background:var(--red)}
+/* scene 4 ladder */
+.ladder{position:absolute;left:70px;right:70px;top:664px}
+.bar{height:72px;margin-bottom:12px;background:var(--amberD);color:#fff;font-size:35px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;opacity:0;transform-origin:0 50%}
+.b0{width:520px}.b1{width:590px}.b2{width:660px}.b3{width:740px}.b4{width:830px}.b5{width:940px;background:var(--amber);color:#000}
+.formula{position:absolute;left:70px;right:70px;top:1176px;font-size:34px;opacity:0;white-space:nowrap;color:var(--amber)}
+.block{position:absolute;left:70px;right:70px;top:1232px;height:298px;background:var(--panel);border:2px solid var(--amberD);border-left:24px solid var(--red);color:#fff;padding:24px 30px;opacity:0;font-size:35px;line-height:1.5}
+.block .x{color:#FF6A5F}
+.block .rej{position:absolute;right:26px;top:24px;width:220px;height:74px;background:var(--red);font-size:52px;display:flex;align-items:center;justify-content:center;font-family:"Barlow Condensed";font-weight:800}
+/* scene 5 */
+.node{position:absolute;left:70px;width:690px;height:144px;border:3px solid var(--amberD);padding:14px 26px;opacity:0;background:var(--panel)}
+.node b{display:block;font-size:68px;line-height:1;font-weight:800}
+.node i{display:block;font-style:normal;font-size:28px;margin-top:6px;color:var(--grayL)}
+.node.k1{background:var(--blue);border-color:var(--amber)}.node.k1 i{color:#C9CCFF}
+.node.k{background:var(--amber);border-color:var(--amber);color:#000}.node.k i{color:#2b2000}
+.arrow{position:absolute;left:100px;font-size:28px;color:var(--amber);opacity:0;white-space:nowrap}
+.fw{position:absolute;left:790px;top:664px;width:220px;height:640px;border:3px dashed var(--red);opacity:0;padding:18px 14px;font-size:30px;color:#FF6A5F;line-height:1.25}
+
+.keys{position:absolute;left:70px;right:70px;top:1686px;height:112px;display:flex;gap:20px}
+.key{flex:1;border:3px solid var(--amberD);background:var(--panel);color:var(--grayL);display:flex;align-items:center;justify-content:center;font-size:29px;letter-spacing:1px}
+</style></head><body>
+<div id="root" data-composition-id="root" data-width="1080" data-height="1920" data-start="0" data-duration="20">
+<div class="frame"></div>
+<div class="hdr"><b class="cond">GRANDPA2-BUDDY</b><span class="mono">harnais d’agent grandMA2</span></div>
+
+<div id="s1" class="scene">
+  <div class="hero" style="top:274px;height:1060px;flex-direction:column;gap:0">
+    <div class="num cond kick">01</div>
+    <div class="head cond" style="font-size:178px;margin-top:22px;width:940px"><div id="h1a" style="opacity:0">Et si</div><div id="h1b" style="opacity:0">votre console</div><div id="h1c" style="opacity:0">d’éclairage</div><div id="h1d" style="opacity:0;color:var(--amber)">savait</div><div id="h1e" style="opacity:0;color:var(--amber)">écouter&nbsp;?</div></div>
+  </div>
+</div>
+
+<div id="s2" class="scene">
+  <div class="hero"><div class="num cond kick">02</div><div class="head cond" style="font-size:128px"><span id="cnt">0</span> outils.<br>Cinq couches.</div></div>
+  <div class="band" id="b2">Outils MCP · grandMA2 · Telnet</div>
+  <div class="layers"><div class="layer l1"><div class="n cond">01</div><div class="t"><b class="cond">Noyau d’agent</b><i class="mono">orchestrateur · mémoire · compétences</i></div></div><div class="layer "><div class="n cond">02</div><div class="t"><b class="cond">Serveur MCP</b><i class="mono">src/server.py · barrière de sécurité</i></div></div><div class="layer "><div class="n cond">03</div><div class="t"><b class="cond">Navigation</b><i class="mono">src/navigation.py · cd · list · scan</i></div></div><div class="layer "><div class="n cond">04</div><div class="t"><b class="cond">Constructeurs de commandes</b><i class="mono">254 fonctions pures → chaînes</i></div></div><div class="layer l5"><div class="n cond">05</div><div class="t"><b class="cond">Client Telnet</b><i class="mono">E/S réseau · auth · anti-injection</i></div></div></div>
+</div>
+
+<div id="s3" class="scene">
+  <div class="hero"><div class="num cond kick">03</div><div class="head cond" style="font-size:112px">Du code<br>à la commande.</div></div>
+  <div class="band">Sortie réelle des constructeurs · niveau de risque</div>
+  <div class="crows"><div class="crow"><div class="n cond">01</div><div class="t"><div class="fn mono">go_sequence(1)</div><div class="out mono">→ go+ sequence 1</div></div><div class="tier mono w">SAFE_WRITE</div></div><div class="crow"><div class="n cond">02</div><div class="t"><div class="fn mono">select_fixture(1, 10)</div><div class="out mono">→ selfix fixture 1 thru 10</div></div><div class="tier mono w">SAFE_WRITE</div></div><div class="crow"><div class="n cond">03</div><div class="t"><div class="fn mono">preset(&quot;color&quot;, 5)</div><div class="out mono">→ preset 4.5</div></div><div class="tier mono w">SAFE_WRITE</div></div><div class="crow"><div class="n cond">04</div><div class="t"><div class="fn mono">store_cue(1, merge=True)</div><div class="out mono">→ store cue 1 /merge</div></div><div class="tier mono d">DESTRUCTIVE</div></div><div class="crow"><div class="n cond">05</div><div class="t"><div class="fn mono">changedest(&quot;Group&quot;, 1)</div><div class="out mono">→ cd Group.1</div></div><div class="tier mono r">SAFE_READ</div></div><div class="crow"><div class="n cond">06</div><div class="t"><div class="fn mono">goto_cue(1, 5)</div><div class="out mono">→ goto cue 5 sequence 1</div></div><div class="tier mono w">SAFE_WRITE</div></div></div>
+</div>
+
+<div id="s4" class="scene">
+  <div class="hero"><div class="num cond kick">04</div><div class="head cond" style="font-size:122px">Six niveaux.<br>Un veto.</div></div>
+  <div class="band" style="font-size:36px">scope ∩ ma2_rights ∩ console_floor</div>
+  <div class="ladder"><div class="bar mono b0"><span>tier:0</span><span>guest</span></div><div class="bar mono b1"><span>tier:1</span><span>operator</span></div><div class="bar mono b2"><span>tier:2</span><span>presets_editor</span></div><div class="bar mono b3"><span>tier:3</span><span>programmer</span></div><div class="bar mono b4"><span>tier:4</span><span>tech_director</span></div><div class="bar mono b5"><span>tier:5</span><span>administrator</span></div></div>
+  <div class="formula mono" id="fm">= AUTORITÉ FINALE</div>
+  <div class="block mono" id="blk"><div class="rej">REFUSÉ</div>session&nbsp;&nbsp;tier:1 · operator<br>outil&nbsp;&nbsp;&nbsp;&nbsp;delete_object<br><span class="x">{"blocked": True,<br>&nbsp;"required_ma2_right": "program"}</span></div>
+</div>
+
+<div id="s5" class="scene">
+  <div class="hero"><div class="num cond kick">05</div><div class="head cond" style="font-size:150px">3&nbsp;700+<br>tests.</div></div>
+  <div class="band">Boucle locale uniquement. Rien d’autre n’entre.</div>
+  <div class="node" id="n1" style="top:664px"><b class="cond">Client LLM</b><i class="mono">Claude Desktop · VS Code</i></div>
+  <div class="arrow mono" id="a1" style="top:824px">▼ stdio</div>
+  <div class="node k1" id="n2" style="top:872px"><b class="cond">Serveur MCP</b><i class="mono">src/server.py · barrière à 3 couches</i></div>
+  <div class="arrow mono" id="a2" style="top:1032px">▼ localhost:30000 · Telnet</div>
+  <div class="node k" id="n3" style="top:1080px"><b class="cond">grandMA2 onPC</b><i class="mono">même machine</i></div>
+  <div class="fw mono" id="fw">pare-feu&nbsp;:<br>TCP 30000<br>boucle<br>locale<br>seule</div>
+  <div class="cond" id="url5" style="position:absolute;left:70px;right:70px;top:1290px;background:var(--amber);color:#000;font-size:50px;padding:24px 30px;opacity:0;white-space:nowrap">github.com/thisis-romar/ma2-onPC-MCP</div>
+  <div class="cond" id="c5" style="position:absolute;left:70px;right:70px;top:1430px;font-size:92px;line-height:.9;opacity:0;white-space:nowrap">Que les lumières <span style="color:var(--amber)">écoutent.</span></div>
+</div>
+
+<div class="cmdline mono" id="cmdline"><span class="pr">[default]&gt;</span><span class="cst " id="cs1">go+ sequence 1</span><span class="cst " id="cs2">cd /</span><span class="cst " id="cr0">go+ sequence 1</span><span class="cst " id="cr1">selfix fixture 1 thru 10</span><span class="cst " id="cr2">preset 4.5</span><span class="cst " id="cr3">store cue 1 /merge</span><span class="cst " id="cr4">cd Group.1</span><span class="cst " id="cr5">goto cue 5 sequence 1</span><span class="cst red" id="cs4">bloqué · rien envoyé</span><span class="cst " id="cs5">uv run python -m src.server</span><span class="cur" id="cur"></span></div>
+
+<div class="keys mono"><div class="key" id="kr">SAFE_READ</div><div class="key" id="kw">SAFE_WRITE</div><div class="key" id="kd">DESTRUCTIVE</div></div>
+<audio id="music" data-timeline-role="music" data-start="0" data-duration="20" data-volume="1" data-fade-out="1.5" src="assets/music/song-cut.mp3"></audio>
+
+<script src="assets/gsap.min.js"></script>
+<script>
+const tl = gsap.timeline({ paused: true });
+const G = n => 0.397 + 0.4317 * n;
+const show=(id,s,e)=>{tl.set(id,{opacity:1},s);tl.set(id,{opacity:0},e);};
+const DROP=4.07;
+const B={s1:[0,DROP],s2:[DROP,G(19)],s3:[G(19),G(31)],s4:[G(31),G(39)],s5:[G(39),20]};
+Object.entries(B).forEach(([k,[s,e]])=>show("#"+k,s,e));
+const pop=(sel,t,d=.18,y=40)=>tl.fromTo(sel,{opacity:0,y},{opacity:1,y:0,duration:d,ease:"power3.out"},t);
+document.querySelectorAll(".kick").forEach(el=>{
+  const [s,e]=B[el.closest(".scene").id];
+  for(let n=0;G(n)<e;n++){ if(G(n)>=s) tl.fromTo(el,{scale:1.04},{scale:1,duration:.28,ease:"power2.out",transformOrigin:"0 0"},G(n)); }
+});
+// cursor blinks on every beat
+for(let n=0;G(n)<20;n++){ tl.set("#cur",{opacity:n%2?0.2:1},G(n)); }
+// S1: hook words on beats 0,2,4,6
+["#h1a","#h1b","#h1c","#h1d","#h1e"].forEach((id,i)=>pop(id,G(i*1.5),.16));
+// command line states
+const typeIn=(id,text,t0,t1)=>{
+  const el=document.getElementById(id), o={n:0};
+  tl.set("#"+id,{opacity:1},t0);
+  tl.to(o,{n:text.length,duration:t1-t0,ease:"none",onUpdate(){el.textContent=text.slice(0,Math.round(o.n));}},t0);
+};
+typeIn("cs1","go+ sequence 1",G(5),G(8));
+tl.set("#cs1",{opacity:0},DROP);
+tl.set("#cs2",{opacity:1},G(11)); tl.set("#cs2",{opacity:0},G(19));
+const r3t=["go+ sequence 1","selfix fixture 1 thru 10","preset 4.5","store cue 1 /merge","cd Group.1","goto cue 5 sequence 1"];
+r3t.forEach((t,i)=>{tl.set("#cr"+i,{opacity:1},G(20+i)); tl.set("#cr"+i,{opacity:0},i<5?G(21+i):G(31));});
+tl.set("#cs4",{opacity:1},G(34)); tl.set("#cs4",{opacity:0},G(39));
+typeIn("cs5","uv run python -m src.server",G(40),G(43));
+// S2: counter on the drop, layers one per beat
+const c={v:0};
+tl.to(c,{v:210,duration:1.3,ease:"power3.out",onUpdate(){document.getElementById("cnt").textContent=Math.round(c.v);}},DROP);
+tl.from("#b2",{opacity:0,duration:.2},DROP+0.1);
+document.querySelectorAll("#s2 .layer").forEach((r,i)=>pop(r,G(11+i)));
+// S3: rows one per beat
+document.querySelectorAll("#s3 .crow").forEach((r,i)=>pop(r,G(20+i)));
+// S4: ladder two bars per beat, formula, blocked card
+document.querySelectorAll("#s4 .bar").forEach((r,i)=>{const t0=G(31+Math.floor(i/2))+(i%2)*0.2; tl.set(r,{opacity:1},t0); tl.fromTo(r,{scaleX:.2},{scaleX:1,duration:.2,ease:"power3.out"},t0);});
+tl.fromTo("#fm",{opacity:0},{opacity:1,duration:.2},G(33)+0.25);
+pop("#blk",G(34),.16);
+// S5
+pop("#n1",G(39)); tl.fromTo("#a1",{opacity:0},{opacity:1,duration:.15},G(39)+0.25);
+pop("#n2",G(40)); tl.fromTo("#a2",{opacity:0},{opacity:1,duration:.15},G(40)+0.25);
+pop("#n3",G(41)); tl.fromTo("#fw",{opacity:0},{opacity:1,duration:.2},G(41)+0.2);
+pop("#url5",G(42),.18); pop("#c5",G(43),.18);
+
+// risk-tier key caps mirror the command on the command line
+const KEY={r:{bg:"#5F5E5C",c:"#FFFFFF",b:"#AD7F00"},w:{bg:"#00008C",c:"#FFFFFF",b:"#FEC000"},d:{bg:"#DA251C",c:"#FFFFFF",b:"#FF6A5F"}};
+const OFF={bg:"#0B0A06",c:"#99958B",b:"#936B00"};
+const lit=(k,t0,t1)=>{const id="#k"+k;
+  tl.set(id,{backgroundColor:KEY[k].bg,color:KEY[k].c,borderColor:KEY[k].b},t0);
+  tl.set(id,{backgroundColor:OFF.bg,color:OFF.c,borderColor:OFF.b},t1);};
+lit("w",G(5),DROP);            // go+ sequence 1  -> Go = SAFE_WRITE
+lit("r",G(11),G(19));          // cd /            -> ChangeDest = SAFE_READ
+["w","w","w","d","r","w"].forEach((k,i)=>lit(k,G(20+i),i<5?G(21+i):G(31)));  // builder rows
+lit("d",G(34),G(39));          // delete_object   -> DESTRUCTIVE
+window.__timelines = window.__timelines || {};
+window.__timelines["root"] = tl;
+</script>
+</div></body></html>
