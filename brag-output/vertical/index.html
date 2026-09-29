@@ -1,0 +1,136 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>GrandPA2-Buddy vertical remix</title>
+<style>
+@font-face{font-family:"Barlow Condensed";font-weight:800;src:url(assets/fonts/barlow-condensed-latin-800-normal.woff2)}
+@font-face{font-family:"Barlow Condensed";font-weight:700;src:url(assets/fonts/barlow-condensed-latin-700-normal.woff2)}
+@font-face{font-family:"IBM Plex Sans";font-weight:400;src:url(assets/fonts/ibm-plex-sans-latin-400-normal.woff2)}
+@font-face{font-family:"IBM Plex Mono";font-weight:500;src:url(assets/fonts/ibm-plex-mono-latin-500-normal.woff2)}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#F0EDE5;--fg:#101214;--blue:#234DFF;--mute:#535A65;--red:#B12D2D;--chip:#E4E0D6}
+html,body{width:1080px;height:1920px;background:var(--bg);overflow:hidden}
+#root{position:relative;width:1080px;height:1920px;background:var(--bg);color:var(--fg);font-family:"IBM Plex Sans",sans-serif}
+.frame{position:absolute;inset:30px;border:3px solid var(--fg)}
+.cond{font-family:"Barlow Condensed",sans-serif;font-weight:800}
+.mono{font-family:"IBM Plex Mono",monospace;font-weight:500}
+.hdr{position:absolute;left:70px;right:70px;top:70px;height:80px;border-bottom:8px solid var(--fg);display:flex;align-items:baseline;gap:26px;padding-bottom:6px}
+.hdr b{font-size:60px;line-height:1}
+.hdr span{font-size:24px;letter-spacing:3px;color:var(--mute);text-transform:uppercase}
+.ftr{position:absolute;left:70px;right:70px;bottom:70px;border-top:3px solid var(--fg);padding-top:16px;display:flex;justify-content:space-between;font-size:30px;letter-spacing:3px;color:var(--mute)}
+.scene{position:absolute;inset:0;opacity:0}
+.hero{position:absolute;left:70px;right:70px;top:225px;height:440px;display:flex;gap:30px;align-items:flex-start}
+.num{font-size:470px;line-height:.82;color:var(--blue);letter-spacing:-8px}
+.head{white-space:nowrap;font-size:190px;line-height:.86;letter-spacing:-3px;padding-top:14px}
+.band{position:absolute;left:70px;right:70px;top:690px;height:90px;background:var(--blue);color:#fff;font-size:52px;display:flex;align-items:center;padding:0 24px;text-transform:uppercase;font-weight:700;font-family:"Barlow Condensed"}
+.rows{position:absolute;left:70px;right:70px;top:820px}
+.row{height:170px;border-top:3px solid var(--fg);display:flex;align-items:center;gap:28px;padding-right:0;opacity:0}
+.row .n{font-size:100px;color:var(--mute);width:120px;border-right:3px solid var(--fg);line-height:1}
+.row .t{flex:1}
+.row .t b{display:block;font-family:"Barlow Condensed";font-weight:700;font-size:62px;line-height:1;white-space:nowrap}
+.row .t i{display:inline-block;font-style:normal;font-size:32px;background:var(--chip);padding:4px 14px;margin-top:8px}
+.chip{width:270px;height:112px;display:flex;align-items:center;justify-content:center;font-size:66px;color:#fff;background:var(--red)}
+.chip.ok{background:var(--blue)}
+.row.hl{background:var(--blue);color:#fff}
+.row.hl .n{color:#fff;border-color:#fff}.row.hl .t i{background:rgba(255,255,255,.18)}
+.row.hl .chip{background:#fff;color:var(--blue)}
+.cap{position:absolute;left:70px;right:70px;top:1700px;font-size:76px;line-height:.95;opacity:0}
+.cap.b{color:var(--blue)}
+.big{position:absolute;left:70px;right:70px;top:800px;text-align:left}
+</style></head><body>
+<div id="root" data-composition-id="root" data-width="1080" data-height="1920" data-start="0" data-duration="20">
+<div class="frame"></div>
+<div class="hdr"><b class="cond">GRANDPA2-BUDDY</b><span class="mono">grandMA2 agent harness</span></div>
+
+<div id="s1" class="scene">
+  <div class="hero" style="top:230px;height:1300px;flex-direction:column;gap:0">
+    <div class="num cond kick" style="font-size:520px">01</div>
+    <div class="head cond" style="font-size:190px;margin-top:20px;width:940px;white-space:nowrap"><div id="h1a" style="opacity:0">What if</div><div id="h1b" style="opacity:0">your lighting</div><div id="h1c" style="opacity:0">console</div><div id="h1d" style="opacity:0;color:var(--blue)">could listen?</div></div>
+  </div>
+  <div class="ftr mono"><span>CODE / METHOD / RESULT</span><span>01 / 05</span></div>
+</div>
+
+<div id="s2" class="scene">
+  <div class="hero"><div class="num cond kick">02</div><div class="head cond" style="font-size:150px">One<br>harness.</div></div>
+  <div class="band" id="b2">MCP tools · grandMA2 · Telnet</div>
+  <div class="cond" id="cnt" style="position:absolute;left:60px;top:810px;height:480px;font-size:440px;line-height:1;color:var(--fg);letter-spacing:-10px">0</div>
+  <div class="rows" style="top:1310px">
+    <div class="row" style="height:120px"><div class="n cond" style="font-size:70px;width:90px">01</div><div class="t"><b>Playback</b></div></div>
+    <div class="row" style="height:120px"><div class="n cond" style="font-size:70px;width:90px">02</div><div class="t"><b>Programming</b></div></div>
+    <div class="row" style="height:120px"><div class="n cond" style="font-size:70px;width:90px">03</div><div class="t"><b>User management</b></div></div>
+  </div>
+  <div class="cap cond b" id="c2" style="top:1730px;font-size:64px">Every grandMA2 operation.</div>
+  <div class="ftr mono"><span>CODE / METHOD / RESULT</span><span>02 / 05</span></div>
+</div>
+
+<div id="s3" class="scene">
+  <div class="hero"><div class="num cond kick">03</div><div class="head cond" style="font-size:150px">Goal in.<br>Steps<br>checked.</div></div>
+  <div class="band">run_agent_goal · classify → trace</div>
+  <div class="rows" id="rows3" style="top:810px">
+    <div class="row" style="height:135px"><div class="n cond" style="font-size:84px;width:110px">01</div><div class="t"><b>classify</b></div><div class="chip ok cond" style="height:90px;width:230px">PASS</div></div>
+    <div class="row" style="height:135px"><div class="n cond" style="font-size:84px;width:110px">02</div><div class="t"><b>plan</b></div><div class="chip ok cond" style="height:90px;width:230px">PASS</div></div>
+    <div class="row" style="height:135px"><div class="n cond" style="font-size:84px;width:110px">03</div><div class="t"><b>validate</b></div><div class="chip ok cond" style="height:90px;width:230px">PASS</div></div>
+    <div class="row" style="height:135px"><div class="n cond" style="font-size:84px;width:110px">04</div><div class="t"><b>execute</b></div><div class="chip ok cond" style="height:90px;width:230px">PASS</div></div>
+    <div class="row" style="height:135px"><div class="n cond" style="font-size:84px;width:110px">05</div><div class="t"><b>verify</b></div><div class="chip ok cond" style="height:90px;width:230px">PASS</div></div>
+    <div class="row hl" style="height:135px"><div class="n cond" style="font-size:84px;width:110px">06</div><div class="t"><b>trace</b></div><div class="chip cond" style="height:90px;width:230px">PASS</div></div>
+  </div>
+  <div class="cap cond b" id="c3">Plan. Execute. Verify. Trace.</div>
+  <div class="ftr mono"><span>CODE / METHOD / RESULT</span><span>03 / 05</span></div>
+</div>
+
+<div id="s4" class="scene">
+  <div class="hero"><div class="num cond kick">04</div><div class="head cond" style="font-size:135px">Three<br>layers.<br>One veto.</div></div>
+  <div class="band">Condition explained · alternative cases</div>
+  <div class="rows">
+    <div class="row"><div class="n cond">01</div><div class="t"><b>OAuth scope</b><i class="mono">scope ✓</i></div><div class="chip ok cond">PASS</div></div>
+    <div class="row"><div class="n cond">02</div><div class="t"><b>MA2 native rights</b><i class="mono">rights ✓</i></div><div class="chip ok cond">PASS</div></div>
+    <div class="row"><div class="n cond">03</div><div class="t"><b>Console floor</b><i class="mono">floor ✓</i></div><div class="chip ok cond">PASS</div></div>
+    <div class="row"><div class="n cond">04</div><div class="t"><b>Line-break injection</b><i class="mono">"\r\n"</i></div><div class="chip cond">REJECT</div></div>
+  </div>
+  <div class="cap cond b" id="c4" style="top:1560px">All three must agree.</div>
+  <div class="ftr mono"><span>CODE / METHOD / RESULT</span><span>04 / 05</span></div>
+</div>
+
+<div id="s5" class="scene">
+  <div class="hero"><div class="num cond kick" style="font-size:420px">05</div><div class="head cond" style="font-size:180px">3,705<br>tests.</div></div>
+  <div class="band" id="b5">Before it touches your rig</div>
+  <div class="big cond" id="pass5" style="opacity:0;top:830px"><div style="background:var(--blue);color:#fff;font-size:340px;line-height:1;padding:30px 40px;display:inline-block">PASS</div></div>
+  <div class="cond" id="url5" style="position:absolute;left:70px;right:70px;top:1330px;background:var(--blue);color:#fff;font-size:47px;padding:26px 30px;opacity:0;font-weight:800;white-space:nowrap">github.com/thisis-romar/ma2-onPC-MCP</div>
+  <div class="cap cond" id="c5" style="top:1560px;font-size:110px;line-height:.9">Let the lights listen.</div>
+  <div class="ftr mono"><span>CODE / METHOD / RESULT</span><span>05 / 05</span></div>
+</div>
+
+<audio id="music" data-timeline-role="music" data-start="0" data-duration="20" data-volume="1" data-fade-out="1.5" src="assets/music/song-cut.mp3"></audio>
+
+<script src="assets/gsap.min.js"></script>
+<script>
+const tl = gsap.timeline({ paused: true });
+const G = n => 0.397 + 0.4317 * n;      // detected beat grid (139 BPM), t = 0 is excerpt start
+const show=(id,s,e)=>{tl.set(id,{opacity:1},s);tl.set(id,{opacity:0},e);};
+const DROP=4.07;
+const B={s1:[0,DROP],s2:[DROP,G(19)],s3:[G(19),G(31)],s4:[G(31),G(39)],s5:[G(39),20]};
+Object.entries(B).forEach(([k,[s,e]])=>show("#"+k,s,e));
+const pop=(sel,t,d=.18)=>tl.fromTo(sel,{opacity:0,y:50},{opacity:1,y:0,duration:d,ease:"power3.out"},t);
+// beat kick on the giant numerals
+document.querySelectorAll(".kick").forEach(el=>{
+  const sc=el.closest(".scene").id, [s,e]=B[sc];
+  for(let n=0;G(n)<e;n++){ if(G(n)>=s) tl.fromTo(el,{scale:1.06},{scale:1,duration:.28,ease:"power2.out",transformOrigin:"0 0"},G(n)); }
+});
+// S1: hook words slam on beats 0,2,4,6
+["#h1a","#h1b","#h1c","#h1d"].forEach((id,i)=>pop(id,G(i*2),.16));
+// S2: count 0 -> 210 on the drop, rows on beats
+const c={v:0};
+tl.to(c,{v:210,duration:1.3,ease:"power3.out",onUpdate(){document.getElementById("cnt").textContent=Math.round(c.v);}},DROP);
+tl.from("#b2",{opacity:0,duration:.2},DROP+0.1);
+document.querySelectorAll("#s2 .row").forEach((r,i)=>pop(r,G(11+i*2)));
+tl.fromTo("#c2",{opacity:0,y:30},{opacity:1,y:0,duration:.2},G(16));
+// S3: rows one per beat, caption at the end
+document.querySelectorAll("#s3 .row").forEach((r,i)=>pop(r,G(20+i)));
+tl.fromTo("#c3",{opacity:0,y:30},{opacity:1,y:0,duration:.2},G(27));
+// S4: rows on beats, REJECT last
+document.querySelectorAll("#s4 .row").forEach((r,i)=>pop(r,G(31+i)));
+tl.fromTo("#c4",{opacity:0,y:30},{opacity:1,y:0,duration:.2},G(35));
+// S5
+pop("#pass5",G(41),.14); pop("#url5",G(43),.18); pop("#c5",G(45)-0.1,.18);
+window.__timelines = window.__timelines || {};
+window.__timelines["root"] = tl;
+</script>
+</div></body></html>
