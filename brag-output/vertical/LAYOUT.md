@@ -1,20 +1,17 @@
-# Vertical layout v4: full-bleed border, overlay-aware (1080 x 1920)
+# Vertical layout v5: full-bleed ivory, no bands (1080 x 1920)
 
-Problem: Instagram Stories cover the top of the frame (profile chip, progress bar) and the bottom (reply bar, floating hearts). v1 put the brand header and footer under them; v3 fixed that by shrinking the design into a card, which left large blank margins.
+History: v3 shrank everything into a card (blank margins). v4 filled the reserved zones with black bands (rejected). v5 returns to the full-bleed ivory of v2 and re-composes it around the real overlay positions.
 
-Measured on a real screenshot (1920-tall space): top overlay to y≈145, hearts start y≈1663, reply bar y≈1810+.
+Measured on a real story screenshot (1920-tall space): profile chip / progress bar end at y≈145; floating hearts start y≈1663; reply bar y≈1810+. Devices differ, so the header keeps ~27 px clearance below the chip.
 
-Fix: keep the full-bleed border and fill the reserved zones with dense, non-informational graphics.
-
-| Zone | y range | Content |
+| Element | y range | Notes |
 |---|---|---|
-| Top band | 33 – 235 | Solid black; 46-tick beat ruler, one tick per song beat, lights cobalt and pops on its beat |
-| Header | 252 – 314 | GRANDPA2-BUDDY brand row (clear of the profile chip) |
-| Hero | 352 – 602 | Big numeral + headline |
-| Blue band | 644 – 714 | Scene label |
-| Content | 738 – ~1550 | Diagrams / rows (all readable text) |
-| Footer | 1578 | CODE / METHOD / RESULT, page x / 5 |
-| Bottom band | 1650 – 1887 | Solid black; mirrored beat ruler + 5 scene-progress segments |
+| Top reserved | 0 – 145 | Left empty; the app's own chip fills it visually |
+| Header (brand) | 172 – 236 | Now clear of the profile chip |
+| Hero (numeral + headline) | 274 – 524 | |
+| Blue band | 552 – 628 | Scene label |
+| Content | 664 – ~1560 | Diagrams and rows, ~900 px tall (was ~700 in v3/v4) |
+| Footer rule + label | 1592 – ~1630 | Above the hearts |
+| Scene tab strip | 1712 – 1852 | 01–05 in gray, current scene cobalt; decorative, fine if covered |
 
-Only decorative elements enter the top and bottom bands, so app overlays covering them cost nothing.
-`safe-zone-check.jpg` shades y<145 and y>1663 red on one frame from each scene.
+`safe-zone-check.jpg`: red shading marks y<145 and y>1663 on one frame per scene.
