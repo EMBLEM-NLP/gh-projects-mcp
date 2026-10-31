@@ -1,0 +1,42 @@
+name: Hosted MCP container smoke
+
+on:
+  pull_request:
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'server-http.mjs'
+      - 'lib/**'
+      - 'package*.json'
+      - '.github/workflows/hosted-mcp-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  container-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build HTTP transport container
+        run: docker build --pull -t gh-projects-mcp:smoke .
+      - name: Launch server with authentication required
+        run: |
+          docker run -d --name gh-projects-smoke -p 127.0.0.1:3000:3000 gh-projects-mcp:smoke
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/healthz > /tmp/health.json; then break; fi
+            sleep 1
+          done
+          node -e "const h=require('/tmp/health.json');if(h.status!=='ok'||h.transport!=='http')process.exit(1)"
+      - name: Verify unauthenticated MCP request is rejected
+        run: |
+          status=$(curl -s -o /tmp/mcp-response -w '%{http_code}' -X POST http://127.0.0.1:3000/mcp -H 'Content-Type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"smoke","version":"1.0"}}}')
+          test "$status" = 401
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs gh-projects-smoke
+      - name: Cleanup
+        if: always()
+        run: docker rm -f gh-projects-smoke || true
